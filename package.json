@@ -1,0 +1,46 @@
+{
+  "name": "timetracker-saas",
+  "version": "1.0.0",
+  "description": "Multi-Company Location-Based Timesheet SaaS Platform",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server . -p 3000 -o",
+    "start:https": "npx http-server . -p 3000 -S -C cert.pem -K key.pem -o",
+    "dev": "npx live-server --port=3000 --open=index.html",
+    "dev:src": "npx live-server src --port=3001 --open=index.html",
+    "build": "echo 'Component-based app - ready for development'",
+    "test": "echo 'Tests not implemented yet'",
+    "deploy": "echo 'Deploy to your hosting platform'",
+    "lint": "echo 'Linting not configured yet'",
+    "format": "echo 'Formatting not configured yet'"
+  },
+  "keywords": [
+    "timesheet",
+    "gps",
+    "location-tracking",
+    "saas",
+    "multi-company",
+    "employee-management",
+    "react",
+    "javascript"
+  ],
+  "author": "TimeTracker Team",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "live-server": "^1.2.2"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/timetracker-saas"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/timetracker-saas/issues"
+  },
+  "homepage": "https://github.com/your-username/timetracker-saas#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
+

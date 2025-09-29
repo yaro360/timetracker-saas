@@ -1,0 +1,287 @@
+{
+  "companies": [
+    {
+      "id": "company-1",
+      "name": "ABC Construction Co.",
+      "industry": "Construction",
+      "address": "123 Main Street, New York, NY 10001",
+      "phone": "(555) 123-4567",
+      "email": "info@abcconstruction.com",
+      "createdAt": "2024-01-15T08:00:00.000Z"
+    },
+    {
+      "id": "company-2", 
+      "name": "HealthCare Plus",
+      "industry": "Healthcare",
+      "address": "456 Medical Drive, Los Angeles, CA 90210",
+      "phone": "(555) 987-6543",
+      "email": "admin@healthcareplus.com",
+      "createdAt": "2024-02-01T09:30:00.000Z"
+    }
+  ],
+  "users": [
+    {
+      "id": "user-1",
+      "username": "john_owner",
+      "email": "john@abcconstruction.com",
+      "password": "password123",
+      "role": "owner",
+      "companyId": "company-1",
+      "firstName": "John",
+      "lastName": "Smith",
+      "createdAt": "2024-01-15T08:00:00.000Z"
+    },
+    {
+      "id": "user-2",
+      "username": "sarah_manager",
+      "email": "sarah@abcconstruction.com", 
+      "password": "password123",
+      "role": "manager",
+      "companyId": "company-1",
+      "firstName": "Sarah",
+      "lastName": "Johnson",
+      "createdAt": "2024-01-16T10:15:00.000Z"
+    },
+    {
+      "id": "user-3",
+      "username": "mike_employee",
+      "email": "mike@abcconstruction.com",
+      "password": "password123", 
+      "role": "employee",
+      "companyId": "company-1",
+      "firstName": "Mike",
+      "lastName": "Wilson",
+      "createdAt": "2024-01-17T07:45:00.000Z"
+    },
+    {
+      "id": "user-4",
+      "username": "lisa_employee",
+      "email": "lisa@abcconstruction.com",
+      "password": "password123",
+      "role": "employee", 
+      "companyId": "company-1",
+      "firstName": "Lisa",
+      "lastName": "Davis",
+      "createdAt": "2024-01-18T08:30:00.000Z"
+    },
+    {
+      "id": "user-5",
+      "username": "dr_martinez",
+      "email": "martinez@healthcareplus.com",
+      "password": "password123",
+      "role": "owner",
+      "companyId": "company-2", 
+      "firstName": "Dr. Maria",
+      "lastName": "Martinez",
+      "createdAt": "2024-02-01T09:30:00.000Z"
+    }
+  ],
+  "jobSites": [
+    {
+      "id": "site-1",
+      "name": "Downtown Office Building",
+      "address1": "789 Business Ave",
+      "address2": "Suite 200",
+      "city": "New York",
+      "state": "NY", 
+      "zipCode": "10001",
+      "country": "United States",
+      "fullAddress": "789 Business Ave, Suite 200, New York, NY 10001, United States",
+      "latitude": 40.7128,
+      "longitude": -74.0060,
+      "radius": 100,
+      "companyId": "company-1",
+      "createdBy": "user-1",
+      "createdAt": "2024-01-20T11:00:00.000Z"
+    },
+    {
+      "id": "site-2", 
+      "name": "Residential Project - Oak Street",
+      "address1": "456 Oak Street",
+      "address2": "",
+      "city": "Brooklyn",
+      "state": "NY",
+      "zipCode": "11201", 
+      "country": "United States",
+      "fullAddress": "456 Oak Street, Brooklyn, NY 11201, United States",
+      "latitude": 40.6892,
+      "longitude": -73.9442,
+      "radius": 150,
+      "companyId": "company-1",
+      "createdBy": "user-2",
+      "createdAt": "2024-01-22T14:30:00.000Z"
+    },
+    {
+      "id": "site-3",
+      "name": "Shopping Mall Renovation", 
+      "address1": "321 Mall Drive",
+      "address2": "",
+      "city": "Queens",
+      "state": "NY",
+      "zipCode": "11375",
+      "country": "United States",
+      "fullAddress": "321 Mall Drive, Queens, NY 11375, United States",
+      "latitude": 40.7282,
+      "longitude": -73.7949,
+      "radius": 200,
+      "companyId": "company-1", 
+      "createdBy": "user-1",
+      "createdAt": "2024-01-25T09:15:00.000Z"
+    },
+    {
+      "id": "site-4",
+      "name": "Main Clinic",
+      "address1": "789 Health Plaza",
+      "address2": "Building A",
+      "city": "Los Angeles", 
+      "state": "CA",
+      "zipCode": "90210",
+      "country": "United States",
+      "fullAddress": "789 Health Plaza, Building A, Los Angeles, CA 90210, United States",
+      "latitude": 34.0522,
+      "longitude": -118.2437,
+      "radius": 75,
+      "companyId": "company-2",
+      "createdBy": "user-5",
+      "createdAt": "2024-02-03T10:00:00.000Z"
+    }
+  ],
+  "timeEntries": [
+    {
+      "id": "entry-1",
+      "userId": "user-3",
+      "jobSiteId": "site-1", 
+      "companyId": "company-1",
+      "clockInTime": "2024-03-01T08:00:00.000Z",
+      "clockOutTime": "2024-03-01T17:00:00.000Z",
+      "totalHours": 9.0,
+      "status": "clocked_out",
+      "clockInLocation": {
+        "latitude": 40.7128,
+        "longitude": -74.0060
+      },
+      "clockOutLocation": {
+        "latitude": 40.7128,
+        "longitude": -74.0060
+      },
+      "createdAt": "2024-03-01T08:00:00.000Z"
+    },
+    {
+      "id": "entry-2",
+      "userId": "user-4",
+      "jobSiteId": "site-1",
+      "companyId": "company-1", 
+      "clockInTime": "2024-03-01T08:15:00.000Z",
+      "clockOutTime": "2024-03-01T16:45:00.000Z",
+      "totalHours": 8.5,
+      "status": "clocked_out",
+      "clockInLocation": {
+        "latitude": 40.7129,
+        "longitude": -74.0061
+      },
+      "clockOutLocation": {
+        "latitude": 40.7127,
+        "longitude": -74.0059
+      },
+      "createdAt": "2024-03-01T08:15:00.000Z"
+    },
+    {
+      "id": "entry-3",
+      "userId": "user-3",
+      "jobSiteId": "site-2",
+      "companyId": "company-1",
+      "clockInTime": "2024-03-02T07:30:00.000Z",
+      "clockOutTime": "2024-03-02T16:30:00.000Z", 
+      "totalHours": 9.0,
+      "status": "clocked_out",
+      "clockInLocation": {
+        "latitude": 40.6892,
+        "longitude": -73.9442
+      },
+      "clockOutLocation": {
+        "latitude": 40.6893,
+        "longitude": -73.9441
+      },
+      "createdAt": "2024-03-02T07:30:00.000Z"
+    },
+    {
+      "id": "entry-4",
+      "userId": "user-4",
+      "jobSiteId": "site-3",
+      "companyId": "company-1",
+      "clockInTime": "2024-03-03T09:00:00.000Z",
+      "clockOutTime": null,
+      "totalHours": 0,
+      "status": "clocked_in",
+      "clockInLocation": {
+        "latitude": 40.7282,
+        "longitude": -73.7949
+      },
+      "clockOutLocation": null,
+      "createdAt": "2024-03-03T09:00:00.000Z"
+    }
+  ],
+  "sampleScenarios": {
+    "newCompanySetup": {
+      "description": "Complete setup flow for a new construction company",
+      "steps": [
+        "Register company with construction industry",
+        "Create owner account",
+        "Add 2 managers", 
+        "Add 5 employees",
+        "Create 3 job sites with different addresses",
+        "Test clock in/out at each site"
+      ]
+    },
+    "multiLocationBusiness": {
+      "description": "Healthcare company with multiple clinic locations",
+      "features": [
+        "Different radius settings for each location",
+        "Role-based access for different clinic managers", 
+        "Shift scheduling integration",
+        "Compliance reporting for healthcare regulations"
+      ]
+    },
+    "mobileWorkforce": {
+      "description": "Field service company with traveling employees",
+      "challenges": [
+        "GPS accuracy in urban environments",
+        "Battery optimization for all-day tracking",
+        "Offline capability for remote areas",
+        "Real-time manager notifications"
+      ]
+    }
+  },
+  "testingGuidelines": {
+    "gpsAccuracy": {
+      "description": "Testing GPS functionality across different scenarios",
+      "testCases": [
+        {
+          "scenario": "Urban environment with tall buildings",
+          "expectedBehavior": "May have reduced accuracy, should still work within reasonable margin",
+          "testSteps": ["Navigate to downtown area", "Test clock in/out", "Verify distance calculations"]
+        },
+        {
+          "scenario": "Indoor locations",
+          "expectedBehavior": "GPS may be less accurate, consider WiFi-based location",
+          "testSteps": ["Test inside large building", "Check location permissions", "Verify fallback behavior"]
+        },
+        {
+          "scenario": "Rural/remote areas", 
+          "expectedBehavior": "Better GPS accuracy but potential connectivity issues",
+          "testSteps": ["Test in open area", "Verify map loading", "Check offline functionality"]
+        }
+      ]
+    },
+    "crossBrowserTesting": {
+      "browsers": ["Chrome", "Firefox", "Safari", "Edge"],
+      "devices": ["Desktop", "Mobile Phone", "Tablet"],
+      "features": ["GPS access", "Map rendering", "Form submission", "Data persistence"]
+    },
+    "performanceTesting": {
+      "metrics": ["Page load time", "GPS acquisition time", "Map rendering speed", "Form response time"],
+      "targets": ["< 3 seconds initial load", "< 5 seconds GPS lock", "< 2 seconds map render", "< 1 second form submit"]
+    }
+  }
+}
+

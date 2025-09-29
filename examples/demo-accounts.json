@@ -1,0 +1,241 @@
+{
+  "demoAccounts": {
+    "description": "Pre-configured demo accounts for testing TimeTracker functionality",
+    "company": {
+      "name": "Demo Construction Co.",
+      "industry": "Construction", 
+      "id": "demo-company-1"
+    },
+    "accounts": [
+      {
+        "role": "owner",
+        "username": "demo-owner",
+        "password": "password",
+        "email": "owner@democonstruction.com",
+        "firstName": "Demo",
+        "lastName": "Owner",
+        "permissions": [
+          "Full company management",
+          "Create/edit/delete managers and employees", 
+          "Manage all job sites",
+          "View all reports and analytics",
+          "Company settings access",
+          "Data export capabilities"
+        ],
+        "testScenarios": [
+          "Create new manager accounts",
+          "Set up job sites with GPS coordinates",
+          "View company-wide time tracking reports",
+          "Manage company settings and information"
+        ]
+      },
+      {
+        "role": "manager", 
+        "username": "demo-manager",
+        "password": "password",
+        "email": "manager@democonstruction.com",
+        "firstName": "Demo",
+        "lastName": "Manager",
+        "permissions": [
+          "Create/edit/delete employee accounts",
+          "Manage job sites for the company",
+          "View team time tracking reports", 
+          "Edit employee information",
+          "Cannot access company settings"
+        ],
+        "testScenarios": [
+          "Add new employees to the system",
+          "Edit existing employee information",
+          "Create job sites with interactive map",
+          "View team productivity reports",
+          "Delete employees who leave company"
+        ]
+      },
+      {
+        "role": "employee",
+        "username": "demo-employee", 
+        "password": "password",
+        "email": "employee@democonstruction.com",
+        "firstName": "Demo",
+        "lastName": "Employee",
+        "permissions": [
+          "Clock in/out at assigned job sites",
+          "View personal timesheet history",
+          "Update personal profile information",
+          "Cannot manage other users or job sites"
+        ],
+        "testScenarios": [
+          "Clock in when within job site radius",
+          "Attempt clock in when out of range",
+          "View personal time tracking history", 
+          "Test GPS accuracy and distance calculation",
+          "Clock out at end of work period"
+        ]
+      }
+    ]
+  },
+  "preConfiguredJobSites": [
+    {
+      "name": "Downtown Office",
+      "address": "123 Main Street, New York, NY 10001",
+      "coordinates": {
+        "latitude": 40.7128,
+        "longitude": -74.0060
+      },
+      "radius": 100,
+      "description": "Primary office location in downtown Manhattan"
+    },
+    {
+      "name": "Brooklyn Warehouse", 
+      "address": "456 Industrial Blvd, Brooklyn, NY 11201",
+      "coordinates": {
+        "latitude": 40.6892,
+        "longitude": -73.9442
+      },
+      "radius": 150,
+      "description": "Main warehouse and distribution center"
+    },
+    {
+      "name": "Queens Construction Site",
+      "address": "789 Development Ave, Queens, NY 11375", 
+      "coordinates": {
+        "latitude": 40.7282,
+        "longitude": -73.7949
+      },
+      "radius": 200,
+      "description": "Active construction project site"
+    }
+  ],
+  "sampleTimeEntries": [
+    {
+      "employee": "demo-employee",
+      "jobSite": "Downtown Office",
+      "date": "2024-03-01",
+      "clockIn": "08:00:00",
+      "clockOut": "17:00:00", 
+      "totalHours": 9.0,
+      "status": "completed"
+    },
+    {
+      "employee": "demo-employee",
+      "jobSite": "Brooklyn Warehouse",
+      "date": "2024-03-02", 
+      "clockIn": "07:30:00",
+      "clockOut": "16:30:00",
+      "totalHours": 9.0,
+      "status": "completed"
+    },
+    {
+      "employee": "demo-employee",
+      "jobSite": "Queens Construction Site",
+      "date": "2024-03-03",
+      "clockIn": "09:00:00",
+      "clockOut": null,
+      "totalHours": 0,
+      "status": "currently_clocked_in"
+    }
+  ],
+  "testingInstructions": {
+    "basicFunctionality": {
+      "steps": [
+        "1. Open TimeTracker application",
+        "2. Click 'Login' tab", 
+        "3. Enter demo-employee / password",
+        "4. Click 'Sign In'",
+        "5. Observe employee dashboard with job sites",
+        "6. Note distance calculations to each site",
+        "7. Try clicking 'Clock In' on different sites",
+        "8. Verify only 'In Range' sites allow clock in"
+      ]
+    },
+    "managerFeatures": {
+      "steps": [
+        "1. Logout and login as demo-manager / password",
+        "2. Navigate to 'Team Management' tab",
+        "3. Click 'Add Employee' to test employee creation",
+        "4. Click edit (✏️) button on existing employee",
+        "5. Test updating employee information", 
+        "6. Navigate to 'Job Sites' tab",
+        "7. Click 'Add Job Site' to test site creation",
+        "8. Use interactive map to select location",
+        "9. Test address geocoding functionality"
+      ]
+    },
+    "ownerFeatures": {
+      "steps": [
+        "1. Logout and login as demo-owner / password",
+        "2. Access all manager features plus:",
+        "3. Navigate to 'Company Settings' tab",
+        "4. View/edit company information",
+        "5. Test creating manager accounts",
+        "6. View company-wide analytics and reports"
+      ]
+    }
+  },
+  "troubleshootingScenarios": {
+    "gpsIssues": {
+      "problem": "GPS not working or inaccurate",
+      "solutions": [
+        "Ensure location permissions are enabled",
+        "Move to area with clear sky view", 
+        "Wait for GPS to acquire better signal",
+        "Try refreshing the browser page",
+        "Check device location settings"
+      ],
+      "testWith": "demo-employee account at different locations"
+    },
+    "loginProblems": {
+      "problem": "Cannot login with demo accounts",
+      "solutions": [
+        "Verify exact username/password (case sensitive)",
+        "Clear browser cache and cookies",
+        "Try different browser or incognito mode",
+        "Check for JavaScript errors in console"
+      ],
+      "credentials": "Ensure using exact: demo-owner, demo-manager, demo-employee"
+    },
+    "mapNotLoading": {
+      "problem": "Interactive map not displaying",
+      "solutions": [
+        "Check internet connection",
+        "Disable ad blockers temporarily", 
+        "Try different browser",
+        "Wait for map tiles to load completely"
+      ],
+      "testWith": "Job site creation in manager/owner accounts"
+    }
+  },
+  "advancedTesting": {
+    "multiDeviceTesting": {
+      "description": "Test across different devices and browsers",
+      "devices": ["Desktop computer", "Smartphone", "Tablet"],
+      "browsers": ["Chrome", "Firefox", "Safari", "Edge"],
+      "testCases": [
+        "Login functionality on each device/browser combination",
+        "GPS accuracy and permission handling",
+        "Touch interface responsiveness on mobile",
+        "Map interaction and zoom capabilities"
+      ]
+    },
+    "dataConsistency": {
+      "description": "Verify data persistence and consistency",
+      "tests": [
+        "Create employee, logout, login - verify employee exists",
+        "Add job site, refresh page - verify site persists", 
+        "Clock in, close browser, reopen - verify still clocked in",
+        "Multiple browser tabs - verify data synchronization"
+      ]
+    },
+    "edgeCases": {
+      "description": "Test unusual but possible scenarios",
+      "scenarios": [
+        "Very long company/employee names",
+        "Special characters in addresses",
+        "International addresses and coordinates",
+        "Rapid clock in/out attempts",
+        "GPS coordinates at exact job site boundaries"
+      ]
+    }
+  }
+}
+
