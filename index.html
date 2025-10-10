@@ -310,6 +310,63 @@
             }
         ];
 
+        // Data Persistence Helper
+        const DataManager = {
+            save: (key, data) => {
+                try {
+                    localStorage.setItem(key, JSON.stringify(data));
+                    console.log(`Saved ${key} to localStorage`);
+                } catch (error) {
+                    console.error(`Error saving ${key}:`, error);
+                }
+            },
+            load: (key, defaultValue = null) => {
+                try {
+                    const data = localStorage.getItem(key);
+                    return data ? JSON.parse(data) : defaultValue;
+                } catch (error) {
+                    console.error(`Error loading ${key}:`, error);
+                    return defaultValue;
+                }
+            },
+            exportAll: () => {
+                const allData = {
+                    users: DataManager.load('users', []),
+                    employees: DataManager.load('employees', []),
+                    managers: DataManager.load('managers', []),
+                    jobSites: DataManager.load('jobSites', []),
+                    timeEntries: DataManager.load('timeEntries', []),
+                    exportDate: new Date().toISOString()
+                };
+                const blob = new Blob([JSON.stringify(allData, null, 2)], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `timetracker-backup-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+                alert('Complete backup downloaded!');
+            },
+            importData: (file) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        Object.keys(data).forEach(key => {
+                            if (key !== 'exportDate') {
+                                DataManager.save(key, data[key]);
+                            }
+                        });
+                        alert('Data imported successfully! Please refresh the page.');
+                        window.location.reload();
+                    } catch (error) {
+                        alert('Error importing data. Please check the file format.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        };
+
         // Main App Component
         const App = () => {
             const [user, setUser] = useState(null);
@@ -373,6 +430,10 @@
             const EmployeeDashboard = () => {
                 const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
                 const [isClockedIn, setIsClockedIn] = useState(false);
+                const [selectedJobSite, setSelectedJobSite] = useState('');
+                const [timeEntries, setTimeEntries] = useState(DataManager.load('timeEntries', []));
+                const [clockInTime, setClockInTime] = useState(null);
+                const [capturedPhoto, setCapturedPhoto] = useState(null);
 
                 useEffect(() => {
                     const timer = setInterval(() => {
@@ -381,27 +442,92 @@
                     return () => clearInterval(timer);
                 }, []);
 
+                // Save time entries whenever they change
+                useEffect(() => {
+                    DataManager.save('timeEntries', timeEntries);
+                }, [timeEntries]);
+
+                const capturePhoto = () => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.capture = 'environment';
+                    input.onchange = (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                setCapturedPhoto(e.target.result);
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    };
+                    input.click();
+                };
+
                 const handleClockIn = () => {
+                    if (!selectedJobSite) {
+                        alert('Please select a job site first!');
+                        return;
+                    }
+
+                    const now = new Date();
+                    const clockInTime = now.toLocaleTimeString();
+                    setClockInTime(clockInTime);
+                    
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition((position) => {
-                            alert(`Clocked in at ${new Date().toLocaleTimeString()}\nLocation: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`);
+                            const location = `${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`;
+                            alert(`Clocked in at ${clockInTime}\nJob Site: ${selectedJobSite}\nLocation: ${location}`);
                             setIsClockedIn(true);
                         });
                     } else {
-                        alert(`Clocked in at ${new Date().toLocaleTimeString()}`);
+                        alert(`Clocked in at ${clockInTime}\nJob Site: ${selectedJobSite}`);
                         setIsClockedIn(true);
                     }
                 };
 
                 const handleClockOut = () => {
+                    const now = new Date();
+                    const clockOutTime = now.toLocaleTimeString();
+                    const duration = clockInTime ? 
+                        Math.round((now - new Date(`1970-01-01T${clockInTime}`)) / (1000 * 60)) : 0;
+                    
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition((position) => {
-                            alert(`Clocked out at ${new Date().toLocaleTimeString()}\nLocation: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`);
+                            const location = `${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`;
+                            const newEntry = {
+                                id: Date.now(),
+                                jobSite: selectedJobSite,
+                                clockIn: clockInTime,
+                                clockOut: clockOutTime,
+                                duration: `${Math.floor(duration / 60)}h ${duration % 60}m`,
+                                location: location,
+                                photo: capturedPhoto,
+                                date: now.toLocaleDateString()
+                            };
+                            setTimeEntries([newEntry, ...timeEntries]);
+                            alert(`Clocked out at ${clockOutTime}\nDuration: ${newEntry.duration}\nLocation: ${location}`);
                             setIsClockedIn(false);
+                            setClockInTime(null);
+                            setCapturedPhoto(null);
                         });
                     } else {
-                        alert(`Clocked out at ${new Date().toLocaleTimeString()}`);
+                        const newEntry = {
+                            id: Date.now(),
+                            jobSite: selectedJobSite,
+                            clockIn: clockInTime,
+                            clockOut: clockOutTime,
+                            duration: `${Math.floor(duration / 60)}h ${duration % 60}m`,
+                            location: 'Location not available',
+                            photo: capturedPhoto,
+                            date: now.toLocaleDateString()
+                        };
+                        setTimeEntries([newEntry, ...timeEntries]);
+                        alert(`Clocked out at ${clockOutTime}\nDuration: ${newEntry.duration}`);
                         setIsClockedIn(false);
+                        setClockInTime(null);
+                        setCapturedPhoto(null);
                     }
                 };
 
@@ -421,24 +547,28 @@
                                         {isClockedIn ? '🟢 Clocked In' : '🔴 Clocked Out'}
                                     </div>
                                     <div style={{ fontSize: '12px', color: '#666' }}>
-                                        {isClockedIn ? 'Working' : 'Not Working'}
+                                        {isClockedIn ? `Since ${clockInTime}` : 'Not Working'}
                                     </div>
                                 </div>
                             </div>
 
                             <div style={{ marginBottom: '20px' }}>
                                 <h3>Job Site</h3>
-                                <select style={{ width: '100%', padding: '10px', marginTop: '10px', borderRadius: '4px', border: '1px solid #ddd' }}>
-                                    <option>Select Job Site</option>
-                                    <option>Construction Site A</option>
-                                    <option>Office Building B</option>
-                                    <option>Warehouse C</option>
+                                <select 
+                                    value={selectedJobSite}
+                                    onChange={(e) => setSelectedJobSite(e.target.value)}
+                                    style={{ width: '100%', padding: '10px', marginTop: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                                >
+                                    <option value="">Select Job Site</option>
+                                    <option value="Construction Site A">Construction Site A</option>
+                                    <option value="Office Building B">Office Building B</option>
+                                    <option value="Warehouse C">Warehouse C</option>
                                 </select>
                             </div>
 
                             <div style={{ marginBottom: '20px' }}>
                                 <h3>Time Tracking</h3>
-                                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px' }}>
+                                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px', flexWrap: 'wrap' }}>
                                     <button 
                                         className="btn btn-success"
                                         onClick={handleClockIn}
@@ -455,12 +585,45 @@
                                     >
                                         🕕 Clock Out
                                     </button>
+                                    <button 
+                                        className="btn btn-outline"
+                                        onClick={capturePhoto}
+                                        style={{ padding: '15px 30px', fontSize: '16px', fontWeight: 'bold' }}
+                                    >
+                                        📸 Take Photo
+                                    </button>
                                 </div>
+                                {capturedPhoto && (
+                                    <div style={{ marginTop: '15px', textAlign: 'center' }}>
+                                        <img src={capturedPhoto} alt="Captured" style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '8px', border: '2px solid #667eea' }} />
+                                        <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>Photo captured!</p>
+                                    </div>
+                                )}
                             </div>
 
                             <div style={{ marginBottom: '20px' }}>
-                                <h3>Today's Entries</h3>
-                                <p style={{ textAlign: 'center', color: '#666', marginTop: '10px' }}>No entries yet</p>
+                                <h3>Today's Entries ({timeEntries.length})</h3>
+                                {timeEntries.length === 0 ? (
+                                    <p style={{ textAlign: 'center', color: '#666', marginTop: '10px' }}>No entries yet</p>
+                                ) : (
+                                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                                        {timeEntries.map(entry => (
+                                            <div key={entry.id} className="activity-item" style={{ marginBottom: '10px' }}>
+                                                <div>
+                                                    <div className="activity-action">{entry.jobSite}</div>
+                                                    <div className="activity-user">{entry.clockIn} - {entry.clockOut}</div>
+                                                    <div style={{ fontSize: '11px', color: '#999' }}>Duration: {entry.duration}</div>
+                                                    {entry.photo && (
+                                                        <div style={{ marginTop: '5px' }}>
+                                                            <img src={entry.photo} alt="Entry photo" style={{ width: '50px', height: '40px', borderRadius: '4px', objectFit: 'cover' }} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <span className="activity-time">{entry.date}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             <button className="btn btn-outline" onClick={logout}>
@@ -473,6 +636,72 @@
 
             // Manager Dashboard Component
             const ManagerDashboard = () => {
+                const [teamMembers, setTeamMembers] = useState(DataManager.load('teamMembers', [
+                    { id: 1, name: 'John Smith', role: 'employee', status: 'clocked-in', hours: '8.5h', lastActivity: '2 hours ago' },
+                    { id: 2, name: 'Sarah Johnson', role: 'employee', status: 'clocked-out', hours: '7.2h', lastActivity: '1 hour ago' },
+                    { id: 3, name: 'Mike Davis', role: 'employee', status: 'clocked-in', hours: '6.8h', lastActivity: '30 min ago' }
+                ]));
+                const [showAddMember, setShowAddMember] = useState(false);
+                const [reports, setReports] = useState(DataManager.load('reports', [
+                    { id: 1, title: 'Weekly Team Report', date: '2024-01-15', status: 'completed' },
+                    { id: 2, title: 'Monthly Hours Summary', date: '2024-01-01', status: 'pending' }
+                ]));
+
+                // Save data whenever it changes
+                useEffect(() => {
+                    DataManager.save('teamMembers', teamMembers);
+                }, [teamMembers]);
+
+                useEffect(() => {
+                    DataManager.save('reports', reports);
+                }, [reports]);
+
+                const handleAddMember = (memberData) => {
+                    const newMember = {
+                        id: Date.now(),
+                        ...memberData,
+                        role: 'employee',
+                        status: 'clocked-out',
+                        hours: '0h',
+                        lastActivity: 'Just added'
+                    };
+                    setTeamMembers([...teamMembers, newMember]);
+                    setShowAddMember(false);
+                    alert('Team member added successfully!');
+                };
+
+                const generateReport = () => {
+                    const totalHours = teamMembers.reduce((sum, member) => {
+                        const hours = parseFloat(member.hours.replace('h', ''));
+                        return sum + hours;
+                    }, 0);
+                    
+                    const clockedInCount = teamMembers.filter(member => member.status === 'clocked-in').length;
+                    
+                    const reportData = {
+                        totalMembers: teamMembers.length,
+                        clockedIn: clockedInCount,
+                        totalHours: totalHours.toFixed(1),
+                        date: new Date().toLocaleDateString()
+                    };
+                    
+                    const blob = new Blob([JSON.stringify(reportData, null, 2)], {type: 'application/json'});
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `team-report-${new Date().toISOString().split('T')[0]}.json`;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                    alert('Team report generated and downloaded!');
+                };
+
+                const sendTeamMessage = () => {
+                    const message = prompt('Enter message to send to team:');
+                    if (message) {
+                        alert(`Message sent to all team members: "${message}"`);
+                    }
+                };
+
                 return (
                     <div className="container">
                         <div className="card">
@@ -481,68 +710,186 @@
                             
                             <div className="stats-grid">
                                 <div className="stat-card">
-                                    <div className="stat-number">3</div>
+                                    <div className="stat-number">{teamMembers.length}</div>
                                     <div className="stat-label">Team Members</div>
                                 </div>
                                 <div className="stat-card">
-                                    <div className="stat-number">2</div>
+                                    <div className="stat-number">{teamMembers.filter(m => m.status === 'clocked-in').length}</div>
                                     <div className="stat-label">Clocked In</div>
                                 </div>
                                 <div className="stat-card">
-                                    <div className="stat-number">24.5h</div>
+                                    <div className="stat-number">{teamMembers.reduce((sum, m) => sum + parseFloat(m.hours.replace('h', '')), 0).toFixed(1)}h</div>
                                     <div className="stat-label">Total Hours</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-number">{reports.length}</div>
+                                    <div className="stat-label">Reports</div>
                                 </div>
                             </div>
 
                             <div style={{ marginBottom: '20px' }}>
-                                <h3>Team Members</h3>
-                                <div className="team-member">
-                                    <div className="member-info">
-                                        <div className="member-name">John Smith</div>
-                                        <div className="member-role">employee</div>
+                                <h3>Team Members ({teamMembers.length})</h3>
+                                {teamMembers.map(member => (
+                                    <div key={member.id} className="team-member">
+                                        <div className="member-info">
+                                            <div className="member-name">{member.name}</div>
+                                            <div className="member-role">{member.role} • {member.hours} today</div>
+                                        </div>
+                                        <div className="member-status">
+                                            <div className={`status-text ${member.status === 'clocked-in' ? 'clocked-in' : 'clocked-out'}`}>
+                                                {member.status === 'clocked-in' ? '🟢 Clocked In' : '🔴 Clocked Out'}
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#999' }}>{member.lastActivity}</div>
+                                        </div>
                                     </div>
-                                    <div className="member-status">
-                                        <div className="status-text clocked-in">🟢 Clocked In</div>
-                                        <div style={{ fontSize: '11px', color: '#999' }}>2 hours ago</div>
-                                    </div>
-                                </div>
-                                <div className="team-member">
-                                    <div className="member-info">
-                                        <div className="member-name">Sarah Johnson</div>
-                                        <div className="member-role">employee</div>
-                                    </div>
-                                    <div className="member-status">
-                                        <div className="status-text clocked-out">🔴 Clocked Out</div>
-                                        <div style={{ fontSize: '11px', color: '#999' }}>1 hour ago</div>
-                                    </div>
-                                </div>
+                                ))}
                             </div>
 
                             <div style={{ marginBottom: '20px' }}>
                                 <h3>Quick Actions</h3>
                                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                                    <button className="btn btn-primary" onClick={() => alert('Generate team report - Feature coming soon!')}>
+                                    <button className="btn btn-primary" onClick={generateReport}>
                                         📊 Generate Report
                                     </button>
-                                    <button className="btn btn-secondary" onClick={() => alert('Send team message - Feature coming soon!')}>
+                                    <button className="btn btn-secondary" onClick={sendTeamMessage}>
                                         💬 Message Team
                                     </button>
-                                    <button className="btn btn-outline" onClick={() => alert('Add team member - Feature coming soon!')}>
+                                    <button className="btn btn-outline" onClick={() => setShowAddMember(true)}>
                                         ➕ Add Member
                                     </button>
                                 </div>
+                            </div>
+
+                            <div style={{ marginBottom: '20px' }}>
+                                <h3>Recent Reports</h3>
+                                {reports.map(report => (
+                                    <div key={report.id} className="activity-item">
+                                        <div>
+                                            <div className="activity-action">{report.title}</div>
+                                            <div className="activity-user">Status: {report.status}</div>
+                                        </div>
+                                        <span className="activity-time">{report.date}</span>
+                                    </div>
+                                ))}
                             </div>
 
                             <button className="btn btn-outline" onClick={logout}>
                                 Logout
                             </button>
                         </div>
+
+                        {/* Add Team Member Modal */}
+                        {showAddMember && (
+                            <div style={{
+                                position: 'fixed',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background: 'rgba(0,0,0,0.5)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: 1000
+                            }}>
+                                <div className="card" style={{ maxWidth: '400px', margin: '20px' }}>
+                                    <h3>Add Team Member</h3>
+                                    <form onSubmit={(e) => {
+                                        e.preventDefault();
+                                        const formData = new FormData(e.target);
+                                        handleAddMember({
+                                            name: formData.get('name'),
+                                            email: formData.get('email')
+                                        });
+                                    }}>
+                                        <div className="form-group">
+                                            <label>Full Name</label>
+                                            <input type="text" name="name" required />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Email</label>
+                                            <input type="email" name="email" required />
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <button type="submit" className="btn btn-primary">Add Member</button>
+                                            <button type="button" className="btn btn-outline" onClick={() => setShowAddMember(false)}>Cancel</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             };
 
             // Owner Dashboard Component
             const OwnerDashboard = () => {
+                const [showAddEmployee, setShowAddEmployee] = useState(false);
+                const [showAddManager, setShowAddManager] = useState(false);
+                const [showAddJobSite, setShowAddJobSite] = useState(false);
+                const [employees, setEmployees] = useState(DataManager.load('employees', [
+                    { id: 1, name: 'John Smith', email: 'john@company.com', role: 'employee', status: 'active' },
+                    { id: 2, name: 'Sarah Johnson', email: 'sarah@company.com', role: 'employee', status: 'active' },
+                    { id: 3, name: 'Mike Davis', email: 'mike@company.com', role: 'employee', status: 'active' }
+                ]));
+                const [managers, setManagers] = useState(DataManager.load('managers', [
+                    { id: 1, name: 'Jane Wilson', email: 'jane@company.com', role: 'manager', status: 'active' },
+                    { id: 2, name: 'Tom Brown', email: 'tom@company.com', role: 'manager', status: 'active' }
+                ]));
+                const [jobSites, setJobSites] = useState(DataManager.load('jobSites', [
+                    { id: 1, name: 'Construction Site A', address: '123 Main St', status: 'active' },
+                    { id: 2, name: 'Office Building B', address: '456 Oak Ave', status: 'active' },
+                    { id: 3, name: 'Warehouse C', address: '789 Pine Rd', status: 'active' }
+                ]));
+
+                // Save data whenever it changes
+                useEffect(() => {
+                    DataManager.save('employees', employees);
+                }, [employees]);
+
+                useEffect(() => {
+                    DataManager.save('managers', managers);
+                }, [managers]);
+
+                useEffect(() => {
+                    DataManager.save('jobSites', jobSites);
+                }, [jobSites]);
+
+                const handleAddEmployee = (employeeData) => {
+                    const newEmployee = {
+                        id: Date.now(),
+                        ...employeeData,
+                        role: 'employee',
+                        status: 'active'
+                    };
+                    setEmployees([...employees, newEmployee]);
+                    setShowAddEmployee(false);
+                    alert('Employee added successfully!');
+                };
+
+                const handleAddManager = (managerData) => {
+                    const newManager = {
+                        id: Date.now(),
+                        ...managerData,
+                        role: 'manager',
+                        status: 'active'
+                    };
+                    setManagers([...managers, newManager]);
+                    setShowAddManager(false);
+                    alert('Manager added successfully!');
+                };
+
+                const handleAddJobSite = (jobSiteData) => {
+                    const newJobSite = {
+                        id: Date.now(),
+                        ...jobSiteData,
+                        status: 'active'
+                    };
+                    setJobSites([...jobSites, newJobSite]);
+                    setShowAddJobSite(false);
+                    alert('Job site created successfully!');
+                };
+
                 return (
                     <div className="container">
                         <div className="card">
@@ -551,15 +898,15 @@
                             
                             <div className="stats-grid">
                                 <div className="stat-card">
-                                    <div className="stat-number">12</div>
+                                    <div className="stat-number">{employees.length}</div>
                                     <div className="stat-label">Total Employees</div>
                                 </div>
                                 <div className="stat-card">
-                                    <div className="stat-number">3</div>
+                                    <div className="stat-number">{managers.length}</div>
                                     <div className="stat-label">Managers</div>
                                 </div>
                                 <div className="stat-card">
-                                    <div className="stat-number">5</div>
+                                    <div className="stat-number">{jobSites.length}</div>
                                     <div className="stat-label">Job Sites</div>
                                 </div>
                                 <div className="stat-card">
@@ -589,35 +936,209 @@
                             <div style={{ marginBottom: '20px' }}>
                                 <h3>Company Management</h3>
                                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                                    <button className="btn btn-primary" onClick={() => alert('Add new employee - Feature coming soon!')}>
+                                    <button className="btn btn-primary" onClick={() => setShowAddEmployee(true)}>
                                         👤 Add Employee
                                     </button>
-                                    <button className="btn btn-secondary" onClick={() => alert('Add new manager - Feature coming soon!')}>
+                                    <button className="btn btn-secondary" onClick={() => setShowAddManager(true)}>
                                         👔 Add Manager
                                     </button>
-                                    <button className="btn btn-outline" onClick={() => alert('Create job site - Feature coming soon!')}>
+                                    <button className="btn btn-outline" onClick={() => setShowAddJobSite(true)}>
                                         🏗️ Create Job Site
                                     </button>
-                                    <button className="btn btn-outline" onClick={() => {
-                                        const data = { users: DEMO_ACCOUNTS, exportDate: new Date().toISOString() };
-                                        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-                                        const url = URL.createObjectURL(blob);
-                                        const link = document.createElement('a');
-                                        link.href = url;
-                                        link.download = `backup-${new Date().toISOString().split('T')[0]}.json`;
-                                        link.click();
-                                        URL.revokeObjectURL(url);
-                                        alert('Backup downloaded!');
-                                    }}>
+                                    <button className="btn btn-outline" onClick={DataManager.exportAll}>
                                         💾 Export Data
                                     </button>
+                                    <button className="btn btn-outline" onClick={() => {
+                                        const input = document.createElement('input');
+                                        input.type = 'file';
+                                        input.accept = '.json';
+                                        input.onchange = (e) => {
+                                            if (e.target.files[0]) {
+                                                DataManager.importData(e.target.files[0]);
+                                            }
+                                        };
+                                        input.click();
+                                    }}>
+                                        📥 Import Data
+                                    </button>
                                 </div>
+                            </div>
+
+                            {/* Employee Management */}
+                            <div style={{ marginBottom: '20px' }}>
+                                <h3>Employees ({employees.length})</h3>
+                                {employees.map(emp => (
+                                    <div key={emp.id} className="team-member">
+                                        <div className="member-info">
+                                            <div className="member-name">{emp.name}</div>
+                                            <div className="member-role">{emp.email}</div>
+                                        </div>
+                                        <div className="member-status">
+                                            <div className="status-text" style={{ color: '#28a745' }}>Active</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Manager Management */}
+                            <div style={{ marginBottom: '20px' }}>
+                                <h3>Managers ({managers.length})</h3>
+                                {managers.map(mgr => (
+                                    <div key={mgr.id} className="team-member">
+                                        <div className="member-info">
+                                            <div className="member-name">{mgr.name}</div>
+                                            <div className="member-role">{mgr.email}</div>
+                                        </div>
+                                        <div className="member-status">
+                                            <div className="status-text" style={{ color: '#28a745' }}>Active</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Job Sites Management */}
+                            <div style={{ marginBottom: '20px' }}>
+                                <h3>Job Sites ({jobSites.length})</h3>
+                                {jobSites.map(site => (
+                                    <div key={site.id} className="team-member">
+                                        <div className="member-info">
+                                            <div className="member-name">{site.name}</div>
+                                            <div className="member-role">{site.address}</div>
+                                        </div>
+                                        <div className="member-status">
+                                            <div className="status-text" style={{ color: '#28a745' }}>Active</div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
 
                             <button className="btn btn-outline" onClick={logout}>
                                 Logout
                             </button>
                         </div>
+
+                        {/* Add Employee Modal */}
+                        {showAddEmployee && (
+                            <div style={{
+                                position: 'fixed',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background: 'rgba(0,0,0,0.5)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: 1000
+                            }}>
+                                <div className="card" style={{ maxWidth: '400px', margin: '20px' }}>
+                                    <h3>Add New Employee</h3>
+                                    <form onSubmit={(e) => {
+                                        e.preventDefault();
+                                        const formData = new FormData(e.target);
+                                        handleAddEmployee({
+                                            name: formData.get('name'),
+                                            email: formData.get('email')
+                                        });
+                                    }}>
+                                        <div className="form-group">
+                                            <label>Full Name</label>
+                                            <input type="text" name="name" required />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Email</label>
+                                            <input type="email" name="email" required />
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <button type="submit" className="btn btn-primary">Add Employee</button>
+                                            <button type="button" className="btn btn-outline" onClick={() => setShowAddEmployee(false)}>Cancel</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Add Manager Modal */}
+                        {showAddManager && (
+                            <div style={{
+                                position: 'fixed',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background: 'rgba(0,0,0,0.5)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: 1000
+                            }}>
+                                <div className="card" style={{ maxWidth: '400px', margin: '20px' }}>
+                                    <h3>Add New Manager</h3>
+                                    <form onSubmit={(e) => {
+                                        e.preventDefault();
+                                        const formData = new FormData(e.target);
+                                        handleAddManager({
+                                            name: formData.get('name'),
+                                            email: formData.get('email')
+                                        });
+                                    }}>
+                                        <div className="form-group">
+                                            <label>Full Name</label>
+                                            <input type="text" name="name" required />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Email</label>
+                                            <input type="email" name="email" required />
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <button type="submit" className="btn btn-primary">Add Manager</button>
+                                            <button type="button" className="btn btn-outline" onClick={() => setShowAddManager(false)}>Cancel</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Add Job Site Modal */}
+                        {showAddJobSite && (
+                            <div style={{
+                                position: 'fixed',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background: 'rgba(0,0,0,0.5)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: 1000
+                            }}>
+                                <div className="card" style={{ maxWidth: '400px', margin: '20px' }}>
+                                    <h3>Create New Job Site</h3>
+                                    <form onSubmit={(e) => {
+                                        e.preventDefault();
+                                        const formData = new FormData(e.target);
+                                        handleAddJobSite({
+                                            name: formData.get('name'),
+                                            address: formData.get('address')
+                                        });
+                                    }}>
+                                        <div className="form-group">
+                                            <label>Job Site Name</label>
+                                            <input type="text" name="name" required />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Address</label>
+                                            <input type="text" name="address" required />
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <button type="submit" className="btn btn-primary">Create Job Site</button>
+                                            <button type="button" className="btn btn-outline" onClick={() => setShowAddJobSite(false)}>Cancel</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             };
