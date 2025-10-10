@@ -2,16 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>TimeTracker - Multi-Company Platform</title>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeTracker - Complete Solution</title>
     <style>
-        /* Reset and Base Styles */
         * {
             margin: 0;
             padding: 0;
@@ -19,214 +12,257 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            -webkit-text-size-adjust: 100%;
-            -webkit-font-smoothing: antialiased;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 400px;
             padding: 20px;
         }
 
         .card {
             background: white;
             border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             padding: 30px;
-            margin-bottom: 20px;
-        }
-
-        .login-card {
-            max-width: 400px;
-            margin: 50px auto;
+            text-align: center;
         }
 
         .logo {
-            width: 60px;
-            height: 60px;
-            background: #4F46E5;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            margin: 0 auto 20px;
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 48px;
+            margin-bottom: 20px;
         }
 
         h1 {
-            text-align: center;
-            color: #1F2937;
+            color: #333;
             margin-bottom: 10px;
-            font-size: 2rem;
-            font-weight: 700;
-        }
-
-        h2 {
-            color: #1F2937;
-            margin-bottom: 20px;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
-        p {
-            color: #6B7280;
-            line-height: 1.6;
+            font-size: 28px;
         }
 
         .subtitle {
-            text-align: center;
-            color: #6B7280;
+            color: #666;
             margin-bottom: 30px;
-            font-size: 1rem;
-        }
-
-        .form {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            font-size: 14px;
         }
 
         .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            margin-bottom: 20px;
+            text-align: left;
         }
 
-        .form-group label {
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
             font-weight: 500;
-            color: #374151;
-            font-size: 0.875rem;
         }
 
-        .form-group input,
-        .form-group select {
-            padding: 12px 16px;
-            border: 2px solid #E5E7EB;
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
             border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.2s;
-            background: white;
+            font-size: 16px;
+            transition: border-color 0.3s;
         }
 
-        .form-group input:focus,
-        .form-group select:focus {
+        input:focus, select:focus {
             outline: none;
-            border-color: #4F46E5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            border-color: #667eea;
         }
 
         .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-decoration: none;
-            min-height: 44px;
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .btn-primary {
-            background: #4F46E5;
+            background: #667eea;
             color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin: 5px;
         }
 
-        .btn-primary:hover:not(:disabled) {
-            background: #4338CA;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        .btn:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
         }
 
         .btn-outline {
             background: transparent;
-            color: #4F46E5;
-            border: 2px solid #4F46E5;
+            color: #667eea;
+            border: 2px solid #667eea;
         }
 
-        .btn-outline:hover:not(:disabled) {
-            background: #4F46E5;
+        .btn-outline:hover {
+            background: #667eea;
             color: white;
         }
 
-        .tab-container {
-            display: flex;
-            background: #F3F4F6;
-            border-radius: 8px;
-            padding: 4px;
-            margin-bottom: 20px;
+        .btn-demo {
+            background: #17a2b8;
+            font-size: 14px;
+            padding: 8px 16px;
         }
 
-        .tab {
-            flex: 1;
-            padding: 12px 16px;
-            background: transparent;
-            border: none;
-            border-radius: 6px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: #6B7280;
-        }
-
-        .tab.active {
-            background: white;
-            color: #4F46E5;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        .btn-demo:hover {
+            background: #138496;
         }
 
         .demo-section {
             margin-top: 20px;
             padding-top: 20px;
-            border-top: 1px solid #E5E7EB;
+            border-top: 1px solid #e1e5e9;
         }
 
         .demo-label {
-            font-size: 0.875rem;
-            color: #6B7280;
+            font-size: 12px;
+            color: #666;
             margin-bottom: 10px;
+        }
+
+        .status-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .time-display {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .status-indicator {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .clocked-in {
+            color: #28a745;
+        }
+
+        .clocked-out {
+            color: #dc3545;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
             text-align: center;
         }
 
-        .demo-buttons {
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .team-member {
             display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
         }
 
-        .btn-demo {
-            background: #F3F4F6;
-            color: #374151;
-            border: 1px solid #D1D5DB;
-            font-size: 0.875rem;
-            padding: 8px 16px;
+        .member-info {
+            text-align: left;
         }
 
-        .btn-demo:hover {
-            background: #E5E7EB;
+        .member-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .member-role {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .member-status {
+            text-align: right;
+        }
+
+        .status-text {
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+        }
+
+        .activity-action {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .activity-user {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .activity-time {
+            font-size: 11px;
+            color: #999;
         }
 
         .loading {
             text-align: center;
+            padding: 50px;
             color: white;
-            font-size: 1.2rem;
-            padding: 40px;
+            font-size: 18px;
         }
     </style>
 </head>
@@ -235,854 +271,442 @@
         <div class="loading">Loading TimeTracker...</div>
     </div>
     
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <script type="text/babel">
-        const { useState, useEffect, createContext, useContext } = React;
+        const { useState, useEffect } = React;
         const { createRoot } = ReactDOM;
 
-        // Auth Context
-        const AuthContext = createContext();
-
-        const useAuth = () => {
-            const context = useContext(AuthContext);
-            if (!context) {
-                throw new Error('useAuth must be used within an AuthProvider');
+        // Simple demo accounts - always available
+        const DEMO_ACCOUNTS = [
+            {
+                id: 'demo-employee-1',
+                username: 'demo-employee',
+                password: 'password',
+                firstName: 'Demo',
+                lastName: 'Employee',
+                role: 'employee',
+                email: 'employee@demo.com'
+            },
+            {
+                id: 'demo-manager-1',
+                username: 'demo-manager',
+                password: 'password',
+                firstName: 'Demo',
+                lastName: 'Manager',
+                role: 'manager',
+                email: 'manager@demo.com'
+            },
+            {
+                id: 'demo-owner-1',
+                username: 'demo-owner',
+                password: 'password',
+                firstName: 'Demo',
+                lastName: 'Owner',
+                role: 'owner',
+                email: 'owner@demo.com'
             }
-            return context;
-        };
-
-        const AuthProvider = ({ children }) => {
-            const [user, setUser] = useState(null);
-
-            const login = (username, password) => {
-                try {
-                    // Fallback demo accounts if localStorage is empty
-                    const demoAccounts = [
-                        {
-                            id: 'demo-owner-1',
-                            username: 'demo-owner',
-                            password: 'password',
-                            email: 'owner@democonstruction.com',
-                            firstName: 'Demo',
-                            lastName: 'Owner',
-                            role: 'owner',
-                            companyId: 'demo-company-1',
-                            createdAt: new Date().toISOString()
-                        },
-                        {
-                            id: 'demo-manager-1',
-                            username: 'demo-manager',
-                            password: 'password',
-                            email: 'manager@democonstruction.com',
-                            firstName: 'Demo',
-                            lastName: 'Manager',
-                            role: 'manager',
-                            companyId: 'demo-company-1',
-                            createdAt: new Date().toISOString()
-                        },
-                        {
-                            id: 'demo-employee-1',
-                            username: 'demo-employee',
-                            password: 'password',
-                            email: 'employee@democonstruction.com',
-                            firstName: 'Demo',
-                            lastName: 'Employee',
-                            role: 'employee',
-                            companyId: 'demo-company-1',
-                            createdAt: new Date().toISOString()
-                        }
-                    ];
-                    
-                    let users = JSON.parse(localStorage.getItem('users') || '[]');
-                    
-                    // If no users in localStorage, use demo accounts
-                    if (users.length === 0) {
-                        users = demoAccounts;
-                        localStorage.setItem('users', JSON.stringify(users));
-                    }
-                    
-                    const foundUser = users.find(u => u.username === username && u.password === password);
-                    
-                    if (foundUser) {
-                        const userData = { ...foundUser };
-                        delete userData.password;
-                        setUser(userData);
-                        localStorage.setItem('currentUser', JSON.stringify(userData));
-                        return true;
-                    }
-                    return false;
-                } catch (error) {
-                    console.error('Login error:', error);
-                    return false;
-                }
-            };
-
-            const logout = () => {
-                setUser(null);
-                localStorage.removeItem('currentUser');
-            };
-
-            const register = (userData) => {
-                try {
-                    const users = JSON.parse(localStorage.getItem('users') || '[]');
-                    
-                    if (users.find(u => u.username === userData.username)) {
-                        alert('Username already exists');
-                        return false;
-                    }
-
-                    if (users.find(u => u.email === userData.email)) {
-                        alert('Email already exists');
-                        return false;
-                    }
-
-                    const newUser = {
-                        id: Date.now().toString(),
-                        ...userData,
-                        createdAt: new Date().toISOString()
-                    };
-
-                    users.push(newUser);
-                    localStorage.setItem('users', JSON.stringify(users));
-                    
-                    const userDataForState = { ...newUser };
-                    delete userDataForState.password;
-                    setUser(userDataForState);
-                    localStorage.setItem('currentUser', JSON.stringify(userDataForState));
-                    
-                    return true;
-                } catch (error) {
-                    console.error('Registration error:', error);
-                    return false;
-                }
-            };
-
-            const createCompany = (companyData, ownerData) => {
-                try {
-                    const companies = JSON.parse(localStorage.getItem('companies') || '[]');
-                    const users = JSON.parse(localStorage.getItem('users') || '[]');
-                    
-                    if (companies.find(c => c.name === companyData.name)) {
-                        alert('Company name already exists');
-                        return false;
-                    }
-
-                    if (users.find(u => u.username === ownerData.username)) {
-                        alert('Username already exists');
-                        return false;
-                    }
-
-                    if (users.find(u => u.email === ownerData.email)) {
-                        alert('Email already exists');
-                        return false;
-                    }
-
-                    const companyId = Date.now().toString();
-                    const ownerId = (Date.now() + 1).toString();
-
-                    const newCompany = {
-                        id: companyId,
-                        ...companyData,
-                        createdAt: new Date().toISOString()
-                    };
-
-                    const newOwner = {
-                        id: ownerId,
-                        ...ownerData,
-                        companyId: companyId,
-                        role: 'owner',
-                        createdAt: new Date().toISOString()
-                    };
-
-                    companies.push(newCompany);
-                    users.push(newOwner);
-                    
-                    localStorage.setItem('companies', JSON.stringify(companies));
-                    localStorage.setItem('users', JSON.stringify(users));
-                    
-                    const userDataForState = { ...newOwner };
-                    delete userDataForState.password;
-                    setUser(userDataForState);
-                    localStorage.setItem('currentUser', JSON.stringify(userDataForState));
-                    
-                    return true;
-                } catch (error) {
-                    console.error('Company creation error:', error);
-                    return false;
-                }
-            };
-
-            const value = {
-                user,
-                login,
-                logout,
-                register,
-                createCompany
-            };
-
-            return React.createElement(AuthContext.Provider, { value }, children);
-        };
-
-        // Login Form Component
-        const LoginForm = ({ onLogin }) => {
-            const [formData, setFormData] = useState({
-                username: '',
-                password: ''
-            });
-            const [isLoading, setIsLoading] = useState(false);
-
-            const handleChange = (e) => {
-                setFormData({
-                    ...formData,
-                    [e.target.name]: e.target.value
-                });
-            };
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                setIsLoading(true);
-
-                try {
-                    const success = onLogin(formData.username, formData.password);
-                    if (!success) {
-                        alert('Invalid credentials. Please try again.');
-                    }
-                } catch (error) {
-                    console.error('Login error:', error);
-                    alert('Login failed. Please try again.');
-                } finally {
-                    setIsLoading(false);
-                }
-            };
-
-            const handleDemoLogin = (role) => {
-                const demoCredentials = {
-                    owner: { username: 'demo-owner', password: 'password' },
-                    manager: { username: 'demo-manager', password: 'password' },
-                    employee: { username: 'demo-employee', password: 'password' }
-                };
-
-                const credentials = demoCredentials[role];
-                if (credentials) {
-                    setFormData(credentials);
-                    onLogin(credentials.username, credentials.password);
-                }
-            };
-
-            return React.createElement('form', { onSubmit: handleSubmit, className: 'form' },
-                React.createElement('div', { className: 'form-group' },
-                    React.createElement('label', { htmlFor: 'username' }, 'Username'),
-                    React.createElement('input', {
-                        type: 'text',
-                        id: 'username',
-                        name: 'username',
-                        value: formData.username,
-                        onChange: handleChange,
-                        required: true,
-                        placeholder: 'Enter your username'
-                    })
-                ),
-                React.createElement('div', { className: 'form-group' },
-                    React.createElement('label', { htmlFor: 'password' }, 'Password'),
-                    React.createElement('input', {
-                        type: 'password',
-                        id: 'password',
-                        name: 'password',
-                        value: formData.password,
-                        onChange: handleChange,
-                        required: true,
-                        placeholder: 'Enter your password'
-                    })
-                ),
-                React.createElement('button', { 
-                    type: 'submit', 
-                    className: 'btn btn-primary',
-                    disabled: isLoading
-                }, isLoading ? 'Signing in...' : 'Sign In'),
-                React.createElement('div', { className: 'demo-section' },
-                    React.createElement('p', { className: 'demo-label' }, 'Quick Demo Access:'),
-                    React.createElement('div', { className: 'demo-buttons' },
-                        React.createElement('button', {
-                            type: 'button',
-                            className: 'btn btn-demo',
-                            onClick: () => handleDemoLogin('owner')
-                        }, 'Owner Demo'),
-                        React.createElement('button', {
-                            type: 'button',
-                            className: 'btn btn-demo',
-                            onClick: () => handleDemoLogin('manager')
-                        }, 'Manager Demo'),
-                        React.createElement('button', {
-                            type: 'button',
-                            className: 'btn btn-demo',
-                            onClick: () => handleDemoLogin('employee')
-                        }, 'Employee Demo')
-                    )
-                )
-            );
-        };
-
-        // Register Form Component
-        const RegisterForm = ({ onRegister }) => {
-            const [formData, setFormData] = useState({
-                firstName: '',
-                lastName: '',
-                username: '',
-                email: '',
-                password: '',
-                confirmPassword: '',
-                role: 'employee'
-            });
-            const [isLoading, setIsLoading] = useState(false);
-
-            const handleChange = (e) => {
-                setFormData({
-                    ...formData,
-                    [e.target.name]: e.target.value
-                });
-            };
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                setIsLoading(true);
-
-                if (formData.password !== formData.confirmPassword) {
-                    alert('Passwords do not match');
-                    setIsLoading(false);
-                    return;
-                }
-
-                if (formData.password.length < 6) {
-                    alert('Password must be at least 6 characters long');
-                    setIsLoading(false);
-                    return;
-                }
-
-                try {
-                    const userData = {
-                        firstName: formData.firstName,
-                        lastName: formData.lastName,
-                        username: formData.username,
-                        email: formData.email,
-                        password: formData.password,
-                        role: formData.role,
-                        companyId: null
-                    };
-
-                    const success = onRegister(userData);
-                    if (!success) {
-                        alert('Registration failed. Username or email may already exist.');
-                    }
-                } catch (error) {
-                    console.error('Registration error:', error);
-                    alert('Registration failed. Please try again.');
-                } finally {
-                    setIsLoading(false);
-                }
-            };
-
-            return React.createElement('form', { onSubmit: handleSubmit, className: 'form' },
-                React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' } },
-                    React.createElement('div', { className: 'form-group' },
-                        React.createElement('label', { htmlFor: 'firstName' }, 'First Name'),
-                        React.createElement('input', {
-                            type: 'text',
-                            id: 'firstName',
-                            name: 'firstName',
-                            value: formData.firstName,
-                            onChange: handleChange,
-                            required: true,
-                            placeholder: 'Enter first name'
-                        })
-                    ),
-                    React.createElement('div', { className: 'form-group' },
-                        React.createElement('label', { htmlFor: 'lastName' }, 'Last Name'),
-                        React.createElement('input', {
-                            type: 'text',
-                            id: 'lastName',
-                            name: 'lastName',
-                            value: formData.lastName,
-                            onChange: handleChange,
-                            required: true,
-                            placeholder: 'Enter last name'
-                        })
-                    )
-                ),
-                React.createElement('div', { className: 'form-group' },
-                    React.createElement('label', { htmlFor: 'username' }, 'Username'),
-                    React.createElement('input', {
-                        type: 'text',
-                        id: 'username',
-                        name: 'username',
-                        value: formData.username,
-                        onChange: handleChange,
-                        required: true,
-                        placeholder: 'Choose a username'
-                    })
-                ),
-                React.createElement('div', { className: 'form-group' },
-                    React.createElement('label', { htmlFor: 'email' }, 'Email'),
-                    React.createElement('input', {
-                        type: 'email',
-                        id: 'email',
-                        name: 'email',
-                        value: formData.email,
-                        onChange: handleChange,
-                        required: true,
-                        placeholder: 'Enter your email'
-                    })
-                ),
-                React.createElement('div', { className: 'form-group' },
-                    React.createElement('label', { htmlFor: 'role' }, 'Role'),
-                    React.createElement('select', {
-                        id: 'role',
-                        name: 'role',
-                        value: formData.role,
-                        onChange: handleChange,
-                        required: true
-                    },
-                        React.createElement('option', { value: 'employee' }, 'Employee'),
-                        React.createElement('option', { value: 'manager' }, 'Manager')
-                    )
-                ),
-                React.createElement('div', { className: 'form-group' },
-                    React.createElement('label', { htmlFor: 'password' }, 'Password'),
-                    React.createElement('input', {
-                        type: 'password',
-                        id: 'password',
-                        name: 'password',
-                        value: formData.password,
-                        onChange: handleChange,
-                        required: true,
-                        placeholder: 'Create a password',
-                        minLength: 6
-                    })
-                ),
-                React.createElement('div', { className: 'form-group' },
-                    React.createElement('label', { htmlFor: 'confirmPassword' }, 'Confirm Password'),
-                    React.createElement('input', {
-                        type: 'password',
-                        id: 'confirmPassword',
-                        name: 'confirmPassword',
-                        value: formData.confirmPassword,
-                        onChange: handleChange,
-                        required: true,
-                        placeholder: 'Confirm your password',
-                        minLength: 6
-                    })
-                ),
-                React.createElement('button', { 
-                    type: 'submit', 
-                    className: 'btn btn-primary',
-                    disabled: isLoading
-                }, isLoading ? 'Creating Account...' : 'Create Account')
-            );
-        };
-
-        // Company Registration Component
-        const CompanyRegistration = ({ onCompanyRegistration }) => {
-            const [step, setStep] = useState(1);
-            const [companyData, setCompanyData] = useState({
-                name: '',
-                industry: 'construction',
-                address: '',
-                phone: '',
-                email: ''
-            });
-            const [ownerData, setOwnerData] = useState({
-                firstName: '',
-                lastName: '',
-                username: '',
-                email: '',
-                password: '',
-                confirmPassword: ''
-            });
-            const [isLoading, setIsLoading] = useState(false);
-
-            const industries = [
-                { value: 'construction', label: 'Construction' },
-                { value: 'healthcare', label: 'Healthcare' },
-                { value: 'retail', label: 'Retail' },
-                { value: 'manufacturing', label: 'Manufacturing' },
-                { value: 'transportation', label: 'Transportation' },
-                { value: 'security', label: 'Security' },
-                { value: 'cleaning', label: 'Cleaning Services' },
-                { value: 'other', label: 'Other' }
-            ];
-
-            const handleCompanyChange = (e) => {
-                setCompanyData({
-                    ...companyData,
-                    [e.target.name]: e.target.value
-                });
-            };
-
-            const handleOwnerChange = (e) => {
-                setOwnerData({
-                    ...ownerData,
-                    [e.target.name]: e.target.value
-                });
-            };
-
-            const handleNext = () => {
-                if (step === 1) {
-                    if (!companyData.name || !companyData.industry || !companyData.email) {
-                        alert('Please fill in all required company fields');
-                        return;
-                    }
-                    setStep(2);
-                }
-            };
-
-            const handleBack = () => {
-                setStep(1);
-            };
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                setIsLoading(true);
-
-                if (ownerData.password !== ownerData.confirmPassword) {
-                    alert('Passwords do not match');
-                    setIsLoading(false);
-                    return;
-                }
-
-                if (ownerData.password.length < 6) {
-                    alert('Password must be at least 6 characters long');
-                    setIsLoading(false);
-                    return;
-                }
-
-                try {
-                    const success = onCompanyRegistration(companyData, {
-                        ...ownerData,
-                        role: 'owner'
-                    });
-                    
-                    if (!success) {
-                        alert('Company registration failed. Username or email may already exist.');
-                    }
-                } catch (error) {
-                    console.error('Company registration error:', error);
-                    alert('Company registration failed. Please try again.');
-                } finally {
-                    setIsLoading(false);
-                }
-            };
-
-            if (step === 1) {
-                return React.createElement('form', { onSubmit: (e) => { e.preventDefault(); handleNext(); }, className: 'form' },
-                    React.createElement('div', { className: 'form-group' },
-                        React.createElement('label', { htmlFor: 'name' }, 'Company Name *'),
-                        React.createElement('input', {
-                            type: 'text',
-                            id: 'name',
-                            name: 'name',
-                            value: companyData.name,
-                            onChange: handleCompanyChange,
-                            required: true,
-                            placeholder: 'Enter company name'
-                        })
-                    ),
-                    React.createElement('div', { className: 'form-group' },
-                        React.createElement('label', { htmlFor: 'industry' }, 'Industry *'),
-                        React.createElement('select', {
-                            id: 'industry',
-                            name: 'industry',
-                            value: companyData.industry,
-                            onChange: handleCompanyChange,
-                            required: true
-                        }, industries.map(industry => 
-                            React.createElement('option', { key: industry.value, value: industry.value }, industry.label)
-                        ))
-                    ),
-                    React.createElement('div', { className: 'form-group' },
-                        React.createElement('label', { htmlFor: 'address' }, 'Company Address'),
-                        React.createElement('input', {
-                            type: 'text',
-                            id: 'address',
-                            name: 'address',
-                            value: companyData.address,
-                            onChange: handleCompanyChange,
-                            placeholder: 'Enter company address'
-                        })
-                    ),
-                    React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' } },
-                        React.createElement('div', { className: 'form-group' },
-                            React.createElement('label', { htmlFor: 'phone' }, 'Phone Number'),
-                            React.createElement('input', {
-                                type: 'tel',
-                                id: 'phone',
-                                name: 'phone',
-                                value: companyData.phone,
-                                onChange: handleCompanyChange,
-                                placeholder: 'Enter phone number'
-                            })
-                        ),
-                        React.createElement('div', { className: 'form-group' },
-                            React.createElement('label', { htmlFor: 'email' }, 'Company Email *'),
-                            React.createElement('input', {
-                                type: 'email',
-                                id: 'email',
-                                name: 'email',
-                                value: companyData.email,
-                                onChange: handleCompanyChange,
-                                required: true,
-                                placeholder: 'Enter company email'
-                            })
-                        )
-                    ),
-                    React.createElement('button', { type: 'submit', className: 'btn btn-primary' }, 'Next: Owner Account')
-                );
-            }
-
-            return React.createElement('form', { onSubmit: handleSubmit, className: 'form' },
-                React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' } },
-                    React.createElement('div', { className: 'form-group' },
-                        React.createElement('label', { htmlFor: 'firstName' }, 'First Name'),
-                        React.createElement('input', {
-                            type: 'text',
-                            id: 'firstName',
-                            name: 'firstName',
-                            value: ownerData.firstName,
-                            onChange: handleOwnerChange,
-                            required: true,
-                            placeholder: 'Enter first name'
-                        })
-                    ),
-                    React.createElement('div', { className: 'form-group' },
-                        React.createElement('label', { htmlFor: 'lastName' }, 'Last Name'),
-                        React.createElement('input', {
-                            type: 'text',
-                            id: 'lastName',
-                            name: 'lastName',
-                            value: ownerData.lastName,
-                            onChange: handleOwnerChange,
-                            required: true,
-                            placeholder: 'Enter last name'
-                        })
-                    )
-                ),
-                React.createElement('div', { className: 'form-group' },
-                    React.createElement('label', { htmlFor: 'username' }, 'Username'),
-                    React.createElement('input', {
-                        type: 'text',
-                        id: 'username',
-                        name: 'username',
-                        value: ownerData.username,
-                        onChange: handleOwnerChange,
-                        required: true,
-                        placeholder: 'Choose a username'
-                    })
-                ),
-                React.createElement('div', { className: 'form-group' },
-                    React.createElement('label', { htmlFor: 'email' }, 'Email'),
-                    React.createElement('input', {
-                        type: 'email',
-                        id: 'email',
-                        name: 'email',
-                        value: ownerData.email,
-                        onChange: handleOwnerChange,
-                        required: true,
-                        placeholder: 'Enter your email'
-                    })
-                ),
-                React.createElement('div', { className: 'form-group' },
-                    React.createElement('label', { htmlFor: 'password' }, 'Password'),
-                    React.createElement('input', {
-                        type: 'password',
-                        id: 'password',
-                        name: 'password',
-                        value: ownerData.password,
-                        onChange: handleOwnerChange,
-                        required: true,
-                        placeholder: 'Create a password',
-                        minLength: 6
-                    })
-                ),
-                React.createElement('div', { className: 'form-group' },
-                    React.createElement('label', { htmlFor: 'confirmPassword' }, 'Confirm Password'),
-                    React.createElement('input', {
-                        type: 'password',
-                        id: 'confirmPassword',
-                        name: 'confirmPassword',
-                        value: ownerData.confirmPassword,
-                        onChange: handleOwnerChange,
-                        required: true,
-                        placeholder: 'Confirm your password',
-                        minLength: 6
-                    })
-                ),
-                React.createElement('div', { style: { display: 'flex', gap: '12px', justifyContent: 'space-between', marginTop: '24px' } },
-                    React.createElement('button', { 
-                        type: 'button', 
-                        className: 'btn btn-outline',
-                        onClick: handleBack
-                    }, 'Back'),
-                    React.createElement('button', { 
-                        type: 'submit', 
-                        className: 'btn btn-primary',
-                        disabled: isLoading
-                    }, isLoading ? 'Creating Company...' : 'Create Company')
-                )
-            );
-        };
+        ];
 
         // Main App Component
         const App = () => {
-            const [currentView, setCurrentView] = useState('login');
             const [user, setUser] = useState(null);
+            const [currentView, setCurrentView] = useState('login');
+            const [formData, setFormData] = useState({ username: '', password: '' });
 
-            useEffect(() => {
-                const savedUser = localStorage.getItem('currentUser');
-                if (savedUser) {
-                    const userData = JSON.parse(savedUser);
-                    setUser(userData);
-                }
-            }, []);
-
-            const handleLogin = (username, password) => {
-                const users = JSON.parse(localStorage.getItem('users') || '[]');
-                const foundUser = users.find(u => u.username === username && u.password === password);
+            // Simple login function
+            const login = (username, password) => {
+                console.log('Login attempt:', username);
                 
-                if (foundUser) {
-                    const userData = { ...foundUser };
-                    delete userData.password;
-                    setUser(userData);
-                    localStorage.setItem('currentUser', JSON.stringify(userData));
+                // Check demo accounts first
+                const demoUser = DEMO_ACCOUNTS.find(u => u.username === username && u.password === password);
+                if (demoUser) {
+                    console.log('Demo login successful:', demoUser.role);
+                    setUser(demoUser);
                     return true;
                 }
+
+                // Check localStorage for other users
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                const foundUser = users.find(u => u.username === username && u.password === password);
+                if (foundUser) {
+                    console.log('User login successful:', foundUser.role);
+                    setUser(foundUser);
+                    return true;
+                }
+
+                console.log('Login failed for:', username);
                 return false;
             };
 
-            const handleRegister = (userData) => {
-                const users = JSON.parse(localStorage.getItem('users') || '[]');
-                
-                if (users.find(u => u.username === userData.username)) {
-                    alert('Username already exists');
-                    return false;
-                }
-
-                if (users.find(u => u.email === userData.email)) {
-                    alert('Email already exists');
-                    return false;
-                }
-
-                const newUser = {
-                    id: Date.now().toString(),
-                    ...userData,
-                    createdAt: new Date().toISOString()
-                };
-
-                users.push(newUser);
-                localStorage.setItem('users', JSON.stringify(users));
-                
-                const userDataForState = { ...newUser };
-                delete userDataForState.password;
-                setUser(userDataForState);
-                localStorage.setItem('currentUser', JSON.stringify(userDataForState));
-                
-                return true;
-            };
-
-            const handleCompanyRegistration = (companyData, ownerData) => {
-                const companies = JSON.parse(localStorage.getItem('companies') || '[]');
-                const users = JSON.parse(localStorage.getItem('users') || '[]');
-                
-                if (companies.find(c => c.name === companyData.name)) {
-                    alert('Company name already exists');
-                    return false;
-                }
-
-                if (users.find(u => u.username === ownerData.username)) {
-                    alert('Username already exists');
-                    return false;
-                }
-
-                if (users.find(u => u.email === ownerData.email)) {
-                    alert('Email already exists');
-                    return false;
-                }
-
-                const companyId = Date.now().toString();
-                const ownerId = (Date.now() + 1).toString();
-
-                const newCompany = {
-                    id: companyId,
-                    ...companyData,
-                    createdAt: new Date().toISOString()
-                };
-
-                const newOwner = {
-                    id: ownerId,
-                    ...ownerData,
-                    companyId: companyId,
-                    role: 'owner',
-                    createdAt: new Date().toISOString()
-                };
-
-                companies.push(newCompany);
-                users.push(newOwner);
-                
-                localStorage.setItem('companies', JSON.stringify(companies));
-                localStorage.setItem('users', JSON.stringify(users));
-                
-                const userDataForState = { ...newOwner };
-                delete userDataForState.password;
-                setUser(userDataForState);
-                localStorage.setItem('currentUser', JSON.stringify(userDataForState));
-                
-                return true;
-            };
-
-            const handleLogout = () => {
+            // Simple logout function
+            const logout = () => {
                 setUser(null);
-                localStorage.removeItem('currentUser');
+                setCurrentView('login');
             };
 
-            if (user) {
-                return React.createElement('div', { style: { padding: '20px', textAlign: 'center' } },
-                    React.createElement('h1', null, `Welcome, ${user.firstName}!`),
-                    React.createElement('p', { style: { marginBottom: '20px' } }, `Role: ${user.role}`),
-                    React.createElement('button', { 
-                        className: 'btn btn-outline',
-                        onClick: handleLogout
-                    }, 'Logout')
+            // Handle form submission
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                const success = login(formData.username, formData.password);
+                if (!success) {
+                    alert('Invalid credentials. Please try again.');
+                }
+            };
+
+            // Handle demo login
+            const handleDemoLogin = (role) => {
+                const demoUser = DEMO_ACCOUNTS.find(u => u.role === role);
+                if (demoUser) {
+                    console.log('Demo login for role:', role);
+                    setFormData({ username: demoUser.username, password: demoUser.password });
+                    const success = login(demoUser.username, demoUser.password);
+                    if (!success) {
+                        alert('Demo login failed. Please try again.');
+                    }
+                }
+            };
+
+            // Employee Dashboard Component
+            const EmployeeDashboard = () => {
+                const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
+                const [isClockedIn, setIsClockedIn] = useState(false);
+
+                useEffect(() => {
+                    const timer = setInterval(() => {
+                        setCurrentTime(new Date().toLocaleTimeString());
+                    }, 1000);
+                    return () => clearInterval(timer);
+                }, []);
+
+                const handleClockIn = () => {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition((position) => {
+                            alert(`Clocked in at ${new Date().toLocaleTimeString()}\nLocation: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`);
+                            setIsClockedIn(true);
+                        });
+                    } else {
+                        alert(`Clocked in at ${new Date().toLocaleTimeString()}`);
+                        setIsClockedIn(true);
+                    }
+                };
+
+                const handleClockOut = () => {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition((position) => {
+                            alert(`Clocked out at ${new Date().toLocaleTimeString()}\nLocation: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`);
+                            setIsClockedIn(false);
+                        });
+                    } else {
+                        alert(`Clocked out at ${new Date().toLocaleTimeString()}`);
+                        setIsClockedIn(false);
+                    }
+                };
+
+                return (
+                    <div className="container">
+                        <div className="card">
+                            <h1>Welcome, {user.firstName}!</h1>
+                            <p style={{ marginBottom: '20px' }}>Role: {user.role}</p>
+                            
+                            <div className="status-display">
+                                <div>
+                                    <div className="time-display">{currentTime}</div>
+                                    <div style={{ fontSize: '14px', color: '#666' }}>{new Date().toLocaleDateString()}</div>
+                                </div>
+                                <div>
+                                    <div className={`status-indicator ${isClockedIn ? 'clocked-in' : 'clocked-out'}`}>
+                                        {isClockedIn ? '🟢 Clocked In' : '🔴 Clocked Out'}
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#666' }}>
+                                        {isClockedIn ? 'Working' : 'Not Working'}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style={{ marginBottom: '20px' }}>
+                                <h3>Job Site</h3>
+                                <select style={{ width: '100%', padding: '10px', marginTop: '10px', borderRadius: '4px', border: '1px solid #ddd' }}>
+                                    <option>Select Job Site</option>
+                                    <option>Construction Site A</option>
+                                    <option>Office Building B</option>
+                                    <option>Warehouse C</option>
+                                </select>
+                            </div>
+
+                            <div style={{ marginBottom: '20px' }}>
+                                <h3>Time Tracking</h3>
+                                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px' }}>
+                                    <button 
+                                        className="btn btn-success"
+                                        onClick={handleClockIn}
+                                        disabled={isClockedIn}
+                                        style={{ padding: '15px 30px', fontSize: '16px', fontWeight: 'bold' }}
+                                    >
+                                        🕐 Clock In
+                                    </button>
+                                    <button 
+                                        className="btn btn-danger"
+                                        onClick={handleClockOut}
+                                        disabled={!isClockedIn}
+                                        style={{ padding: '15px 30px', fontSize: '16px', fontWeight: 'bold' }}
+                                    >
+                                        🕕 Clock Out
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style={{ marginBottom: '20px' }}>
+                                <h3>Today's Entries</h3>
+                                <p style={{ textAlign: 'center', color: '#666', marginTop: '10px' }}>No entries yet</p>
+                            </div>
+
+                            <button className="btn btn-outline" onClick={logout}>
+                                Logout
+                            </button>
+                        </div>
+                    </div>
                 );
+            };
+
+            // Manager Dashboard Component
+            const ManagerDashboard = () => {
+                return (
+                    <div className="container">
+                        <div className="card">
+                            <h1>Welcome, {user.firstName}!</h1>
+                            <p style={{ marginBottom: '20px' }}>Role: {user.role}</p>
+                            
+                            <div className="stats-grid">
+                                <div className="stat-card">
+                                    <div className="stat-number">3</div>
+                                    <div className="stat-label">Team Members</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-number">2</div>
+                                    <div className="stat-label">Clocked In</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-number">24.5h</div>
+                                    <div className="stat-label">Total Hours</div>
+                                </div>
+                            </div>
+
+                            <div style={{ marginBottom: '20px' }}>
+                                <h3>Team Members</h3>
+                                <div className="team-member">
+                                    <div className="member-info">
+                                        <div className="member-name">John Smith</div>
+                                        <div className="member-role">employee</div>
+                                    </div>
+                                    <div className="member-status">
+                                        <div className="status-text clocked-in">🟢 Clocked In</div>
+                                        <div style={{ fontSize: '11px', color: '#999' }}>2 hours ago</div>
+                                    </div>
+                                </div>
+                                <div className="team-member">
+                                    <div className="member-info">
+                                        <div className="member-name">Sarah Johnson</div>
+                                        <div className="member-role">employee</div>
+                                    </div>
+                                    <div className="member-status">
+                                        <div className="status-text clocked-out">🔴 Clocked Out</div>
+                                        <div style={{ fontSize: '11px', color: '#999' }}>1 hour ago</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style={{ marginBottom: '20px' }}>
+                                <h3>Quick Actions</h3>
+                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                                    <button className="btn btn-primary" onClick={() => alert('Generate team report - Feature coming soon!')}>
+                                        📊 Generate Report
+                                    </button>
+                                    <button className="btn btn-secondary" onClick={() => alert('Send team message - Feature coming soon!')}>
+                                        💬 Message Team
+                                    </button>
+                                    <button className="btn btn-outline" onClick={() => alert('Add team member - Feature coming soon!')}>
+                                        ➕ Add Member
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button className="btn btn-outline" onClick={logout}>
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                );
+            };
+
+            // Owner Dashboard Component
+            const OwnerDashboard = () => {
+                return (
+                    <div className="container">
+                        <div className="card">
+                            <h1>Welcome, {user.firstName}!</h1>
+                            <p style={{ marginBottom: '20px' }}>Role: {user.role}</p>
+                            
+                            <div className="stats-grid">
+                                <div className="stat-card">
+                                    <div className="stat-number">12</div>
+                                    <div className="stat-label">Total Employees</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-number">3</div>
+                                    <div className="stat-label">Managers</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-number">5</div>
+                                    <div className="stat-label">Job Sites</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-number">480h</div>
+                                    <div className="stat-label">Hours This Week</div>
+                                </div>
+                            </div>
+
+                            <div style={{ marginBottom: '20px' }}>
+                                <h3>Recent Activity</h3>
+                                <div className="activity-item">
+                                    <div>
+                                        <div className="activity-action">New employee hired</div>
+                                        <div className="activity-user">Sarah Johnson</div>
+                                    </div>
+                                    <span className="activity-time">2 hours ago</span>
+                                </div>
+                                <div className="activity-item">
+                                    <div>
+                                        <div className="activity-action">Job site created</div>
+                                        <div className="activity-user">Construction Site D</div>
+                                    </div>
+                                    <span className="activity-time">4 hours ago</span>
+                                </div>
+                            </div>
+
+                            <div style={{ marginBottom: '20px' }}>
+                                <h3>Company Management</h3>
+                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                                    <button className="btn btn-primary" onClick={() => alert('Add new employee - Feature coming soon!')}>
+                                        👤 Add Employee
+                                    </button>
+                                    <button className="btn btn-secondary" onClick={() => alert('Add new manager - Feature coming soon!')}>
+                                        👔 Add Manager
+                                    </button>
+                                    <button className="btn btn-outline" onClick={() => alert('Create job site - Feature coming soon!')}>
+                                        🏗️ Create Job Site
+                                    </button>
+                                    <button className="btn btn-outline" onClick={() => {
+                                        const data = { users: DEMO_ACCOUNTS, exportDate: new Date().toISOString() };
+                                        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+                                        const url = URL.createObjectURL(blob);
+                                        const link = document.createElement('a');
+                                        link.href = url;
+                                        link.download = `backup-${new Date().toISOString().split('T')[0]}.json`;
+                                        link.click();
+                                        URL.revokeObjectURL(url);
+                                        alert('Backup downloaded!');
+                                    }}>
+                                        💾 Export Data
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button className="btn btn-outline" onClick={logout}>
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                );
+            };
+
+            // Login Form Component
+            const LoginForm = () => {
+                return (
+                    <div className="container">
+                        <div className="card">
+                            <div className="logo">⏰</div>
+                            <h1>TimeTracker</h1>
+                            <p className="subtitle">Multi-Company Location-Based Timesheet Platform</p>
+                            
+                            <form onSubmit={handleSubmit}>
+                                <div className="form-group">
+                                    <label htmlFor="username">Username</label>
+                                    <input
+                                        type="text"
+                                        id="username"
+                                        value={formData.username}
+                                        onChange={(e) => setFormData({...formData, username: e.target.value})}
+                                        required
+                                    />
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label htmlFor="password">Password</label>
+                                    <input
+                                        type="password"
+                                        id="password"
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({...formData, password: e.target.value})}
+                                        required
+                                    />
+                                </div>
+                                
+                                <button type="submit" className="btn" style={{ width: '100%', marginBottom: '20px' }}>
+                                    Login
+                                </button>
+                            </form>
+
+                            <div className="demo-section">
+                                <p className="demo-label">Quick Demo Access:</p>
+                                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-demo"
+                                        onClick={() => handleDemoLogin('employee')}
+                                    >
+                                        Employee Demo
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-demo"
+                                        onClick={() => handleDemoLogin('manager')}
+                                    >
+                                        Manager Demo
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-demo"
+                                        onClick={() => handleDemoLogin('owner')}
+                                    >
+                                        Owner Demo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            // Render based on user state
+            if (user) {
+                if (user.role === 'employee') {
+                    return <EmployeeDashboard />;
+                } else if (user.role === 'manager') {
+                    return <ManagerDashboard />;
+                } else if (user.role === 'owner') {
+                    return <OwnerDashboard />;
+                }
             }
 
-            return React.createElement('div', { className: 'container' },
-                React.createElement('div', { className: 'login-card' },
-                    React.createElement('div', { className: 'logo' }, '⏰'),
-                    React.createElement('h1', null, 'TimeTracker'),
-                    React.createElement('p', { className: 'subtitle' }, 'Multi-Company Location-Based Timesheet Platform'),
-                    
-                    React.createElement('div', { className: 'tab-container' },
-                        React.createElement('button', { 
-                            className: `tab ${currentView === 'login' ? 'active' : ''}`,
-                            onClick: () => setCurrentView('login')
-                        }, 'Login'),
-                        React.createElement('button', { 
-                            className: `tab ${currentView === 'register' ? 'active' : ''}`,
-                            onClick: () => setCurrentView('register')
-                        }, 'Register'),
-                        React.createElement('button', { 
-                            className: `tab ${currentView === 'company' ? 'active' : ''}`,
-                            onClick: () => setCurrentView('company')
-                        }, 'Start Company')
-                    ),
-
-                    currentView === 'login' && React.createElement(LoginForm, { onLogin: handleLogin }),
-                    currentView === 'register' && React.createElement(RegisterForm, { onRegister: handleRegister }),
-                    currentView === 'company' && React.createElement(CompanyRegistration, { onCompanyRegistration: handleCompanyRegistration })
-                )
-            );
+            return <LoginForm />;
         };
 
         // Render the app
         const root = createRoot(document.getElementById('root'));
-        root.render(React.createElement(AuthProvider, null, React.createElement(App)));
+        root.render(<App />);
     </script>
 </body>
 </html>
-
