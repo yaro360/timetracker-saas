@@ -3957,117 +3957,39 @@
         };
 
         const App = () => {
+            const { user, login, logout, register, createCompany } = useAuth();
             const [currentView, setCurrentView] = useState('login');
-            const [user, setUser] = useState(null);
 
             useEffect(() => {
+                // Check if user is already logged in
                 const savedUser = localStorage.getItem('currentUser');
                 if (savedUser) {
                     const userData = JSON.parse(savedUser);
-                    setUser(userData);
+                    login(userData.username, userData.password);
                 }
             }, []);
 
             const handleLogin = (username, password) => {
-                const users = JSON.parse(localStorage.getItem('users') || '[]');
-                const foundUser = users.find(u => u.username === username && u.password === password);
-                
-                if (foundUser) {
-                    const userData = { ...foundUser };
-                    delete userData.password;
-                    setUser(userData);
-                    localStorage.setItem('currentUser', JSON.stringify(userData));
-                    return true;
+                if (login(username, password)) {
+                    setCurrentView('dashboard');
                 }
-                return false;
             };
 
             const handleRegister = (userData) => {
-                console.log('Registering new user:', userData);
-                const users = JSON.parse(localStorage.getItem('users') || '[]');
-                console.log('Current users before registration:', users.map(u => ({ username: u.username, role: u.role })));
-                
-                if (users.find(u => u.username === userData.username)) {
-                    alert('Username already exists');
-                    return false;
+                if (register(userData)) {
+                    setCurrentView('dashboard');
                 }
-
-                if (users.find(u => u.email === userData.email)) {
-                    alert('Email already exists');
-                    return false;
-                }
-
-                const newUser = {
-                    id: Date.now().toString(),
-                    ...userData,
-                    createdAt: new Date().toISOString()
-                };
-
-                users.push(newUser);
-                localStorage.setItem('users', JSON.stringify(users));
-                console.log('User registered successfully. New user list:', users.map(u => ({ username: u.username, role: u.role })));
-                
-                const userDataForState = { ...newUser };
-                delete userDataForState.password;
-                setUser(userDataForState);
-                localStorage.setItem('currentUser', JSON.stringify(userDataForState));
-                
-                return true;
             };
 
             const handleCompanyRegistration = (companyData, ownerData) => {
-                const companies = JSON.parse(localStorage.getItem('companies') || '[]');
-                const users = JSON.parse(localStorage.getItem('users') || '[]');
-                
-                if (companies.find(c => c.name === companyData.name)) {
-                    alert('Company name already exists');
-                    return false;
+                if (createCompany(companyData, ownerData)) {
+                    setCurrentView('dashboard');
                 }
-
-                if (users.find(u => u.username === ownerData.username)) {
-                    alert('Username already exists');
-                    return false;
-                }
-
-                if (users.find(u => u.email === ownerData.email)) {
-                    alert('Email already exists');
-                    return false;
-                }
-
-                const companyId = Date.now().toString();
-                const ownerId = (Date.now() + 1).toString();
-
-                const newCompany = {
-                    id: companyId,
-                    ...companyData,
-                    createdAt: new Date().toISOString()
-                };
-
-                const newOwner = {
-                    id: ownerId,
-                    ...ownerData,
-                    companyId: companyId,
-                    role: 'owner',
-                    createdAt: new Date().toISOString()
-                };
-
-                companies.push(newCompany);
-                users.push(newOwner);
-                
-                localStorage.setItem('companies', JSON.stringify(companies));
-                localStorage.setItem('users', JSON.stringify(users));
-                
-                const userDataForState = { ...newOwner };
-                delete userDataForState.password;
-                setUser(userDataForState);
-                localStorage.setItem('currentUser', JSON.stringify(userDataForState));
-                
-                return true;
             };
 
             const handleLogout = () => {
-                setUser(null);
-                localStorage.removeItem('currentUser');
+                logout();
+                setCurrentView('login');
             };
 
             if (user) {
