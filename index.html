@@ -999,25 +999,106 @@
             if (user) {
                 // Simple dashboard based on role
                 if (user.role === 'employee') {
+                    const [isClockedIn, setIsClockedIn] = useState(false);
+                    const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
+                    const [timeEntries, setTimeEntries] = useState([]);
+
+                    // Update time every second
+                    useEffect(() => {
+                        const timer = setInterval(() => {
+                            setCurrentTime(new Date().toLocaleTimeString());
+                        }, 1000);
+                        return () => clearInterval(timer);
+                    }, []);
+
+                    const handleClockIn = () => {
+                        const now = new Date();
+                        const entry = {
+                            id: Date.now(),
+                            type: 'clock-in',
+                            time: now.toLocaleTimeString(),
+                            date: now.toLocaleDateString(),
+                            timestamp: now.toISOString()
+                        };
+                        setTimeEntries(prev => [...prev, entry]);
+                        setIsClockedIn(true);
+                        alert(`Clocked in at ${entry.time}`);
+                    };
+
+                    const handleClockOut = () => {
+                        if (!isClockedIn) {
+                            alert('You must clock in first!');
+                            return;
+                        }
+                        const now = new Date();
+                        const entry = {
+                            id: Date.now(),
+                            type: 'clock-out',
+                            time: now.toLocaleTimeString(),
+                            date: now.toLocaleDateString(),
+                            timestamp: now.toISOString()
+                        };
+                        setTimeEntries(prev => [...prev, entry]);
+                        setIsClockedIn(false);
+                        alert(`Clocked out at ${entry.time}`);
+                    };
+
                     return React.createElement('div', { className: 'container' },
                         React.createElement('div', { className: 'card' },
                             React.createElement('h1', null, `Welcome, ${user.firstName}!`),
                             React.createElement('p', { style: { marginBottom: '20px' } }, `Role: ${user.role}`),
                             
+                            React.createElement('div', { style: { 
+                                background: '#f8f9fa', 
+                                padding: '15px', 
+                                borderRadius: '8px', 
+                                marginBottom: '20px',
+                                textAlign: 'center'
+                            } },
+                                React.createElement('h3', { style: { margin: '0 0 10px 0' } }, `Current Time: ${currentTime}`),
+                                React.createElement('p', { 
+                                    style: { 
+                                        margin: '0', 
+                                        color: isClockedIn ? '#28a745' : '#dc3545',
+                                        fontWeight: 'bold'
+                                    } 
+                                }, isClockedIn ? '🟢 CLOCKED IN' : '🔴 CLOCKED OUT')
+                            ),
+                            
                             React.createElement('div', { style: { display: 'flex', gap: '10px', marginBottom: '20px' } },
                                 React.createElement('button', { 
                                     className: 'btn btn-primary',
-                                    onClick: () => alert('Clock In - Feature coming soon!')
-                                }, 'Clock In'),
+                                    onClick: handleClockIn,
+                                    disabled: isClockedIn
+                                }, isClockedIn ? 'Already Clocked In' : 'Clock In'),
                                 React.createElement('button', { 
                                     className: 'btn btn-secondary',
-                                    onClick: () => alert('Clock Out - Feature coming soon!')
+                                    onClick: handleClockOut,
+                                    disabled: !isClockedIn
                                 }, 'Clock Out')
                             ),
                             
                             React.createElement('div', { style: { marginBottom: '20px' } },
                                 React.createElement('h3', null, 'Today\'s Time Entries'),
-                                React.createElement('p', null, 'No entries yet - Clock in to start tracking!')
+                                timeEntries.length === 0 ? 
+                                    React.createElement('p', null, 'No entries yet - Clock in to start tracking!') :
+                                    React.createElement('div', null,
+                                        timeEntries.map(entry => 
+                                            React.createElement('div', { 
+                                                key: entry.id,
+                                                style: { 
+                                                    padding: '8px', 
+                                                    margin: '5px 0', 
+                                                    background: entry.type === 'clock-in' ? '#d4edda' : '#f8d7da',
+                                                    borderRadius: '4px',
+                                                    border: `1px solid ${entry.type === 'clock-in' ? '#c3e6cb' : '#f5c6cb'}`
+                                                }
+                                            }, 
+                                                React.createElement('strong', null, entry.type === 'clock-in' ? '🟢 Clock In' : '🔴 Clock Out'),
+                                                React.createElement('span', { style: { marginLeft: '10px' } }, `at ${entry.time}`)
+                                            )
+                                        )
+                                    )
                             ),
                             
                             React.createElement('button', { 
