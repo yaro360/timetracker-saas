@@ -239,63 +239,6 @@
         const { useState, useEffect, createContext, useContext } = React;
         const { createRoot } = ReactDOM;
 
-        // Initialize demo accounts if they don't exist
-        const initializeDemoAccounts = () => {
-            const users = JSON.parse(localStorage.getItem('users') || '[]');
-            const demoAccounts = [
-                {
-                    id: 'demo-owner-1',
-                    username: 'demo-owner',
-                    password: 'password',
-                    email: 'owner@democonstruction.com',
-                    firstName: 'Demo',
-                    lastName: 'Owner',
-                    role: 'owner',
-                    companyId: 'demo-company-1',
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 'demo-manager-1',
-                    username: 'demo-manager',
-                    password: 'password',
-                    email: 'manager@democonstruction.com',
-                    firstName: 'Demo',
-                    lastName: 'Manager',
-                    role: 'manager',
-                    companyId: 'demo-company-1',
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 'demo-employee-1',
-                    username: 'demo-employee',
-                    password: 'password',
-                    email: 'employee@democonstruction.com',
-                    firstName: 'Demo',
-                    lastName: 'Employee',
-                    role: 'employee',
-                    companyId: 'demo-company-1',
-                    createdAt: new Date().toISOString()
-                }
-            ];
-
-            // Only add demo accounts if they don't already exist
-            let needsUpdate = false;
-            demoAccounts.forEach(demoAccount => {
-                if (!users.find(u => u.username === demoAccount.username)) {
-                    users.push(demoAccount);
-                    needsUpdate = true;
-                }
-            });
-
-            if (needsUpdate) {
-                localStorage.setItem('users', JSON.stringify(users));
-                console.log('Demo accounts initialized');
-            }
-        };
-
-        // Initialize demo accounts on page load
-        initializeDemoAccounts();
-
         // Auth Context
         const AuthContext = createContext();
 
@@ -312,7 +255,51 @@
 
             const login = (username, password) => {
                 try {
-                    const users = JSON.parse(localStorage.getItem('users') || '[]');
+                    // Fallback demo accounts if localStorage is empty
+                    const demoAccounts = [
+                        {
+                            id: 'demo-owner-1',
+                            username: 'demo-owner',
+                            password: 'password',
+                            email: 'owner@democonstruction.com',
+                            firstName: 'Demo',
+                            lastName: 'Owner',
+                            role: 'owner',
+                            companyId: 'demo-company-1',
+                            createdAt: new Date().toISOString()
+                        },
+                        {
+                            id: 'demo-manager-1',
+                            username: 'demo-manager',
+                            password: 'password',
+                            email: 'manager@democonstruction.com',
+                            firstName: 'Demo',
+                            lastName: 'Manager',
+                            role: 'manager',
+                            companyId: 'demo-company-1',
+                            createdAt: new Date().toISOString()
+                        },
+                        {
+                            id: 'demo-employee-1',
+                            username: 'demo-employee',
+                            password: 'password',
+                            email: 'employee@democonstruction.com',
+                            firstName: 'Demo',
+                            lastName: 'Employee',
+                            role: 'employee',
+                            companyId: 'demo-company-1',
+                            createdAt: new Date().toISOString()
+                        }
+                    ];
+                    
+                    let users = JSON.parse(localStorage.getItem('users') || '[]');
+                    
+                    // If no users in localStorage, use demo accounts
+                    if (users.length === 0) {
+                        users = demoAccounts;
+                        localStorage.setItem('users', JSON.stringify(users));
+                    }
+                    
                     const foundUser = users.find(u => u.username === username && u.password === password);
                     
                     if (foundUser) {
