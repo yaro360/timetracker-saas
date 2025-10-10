@@ -1002,6 +1002,13 @@
                     const [isClockedIn, setIsClockedIn] = useState(false);
                     const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
                     const [timeEntries, setTimeEntries] = useState([]);
+                    const [currentLocation, setCurrentLocation] = useState(null);
+                    const [selectedJobSite, setSelectedJobSite] = useState('');
+                    const [jobSites, setJobSites] = useState([
+                        { id: 1, name: 'Construction Site A', address: '123 Main St' },
+                        { id: 2, name: 'Office Building B', address: '456 Oak Ave' },
+                        { id: 3, name: 'Warehouse C', address: '789 Pine Rd' }
+                    ]);
 
                     // Update time every second
                     useEffect(() => {
@@ -1011,36 +1018,119 @@
                         return () => clearInterval(timer);
                     }, []);
 
-                    const handleClockIn = () => {
-                        const now = new Date();
-                        const entry = {
-                            id: Date.now(),
-                            type: 'clock-in',
-                            time: now.toLocaleTimeString(),
-                            date: now.toLocaleDateString(),
-                            timestamp: now.toISOString()
-                        };
-                        setTimeEntries(prev => [...prev, entry]);
-                        setIsClockedIn(true);
-                        alert(`Clocked in at ${entry.time}`);
+                    // Get current location
+                    const getCurrentLocation = () => {
+                        if (!navigator.geolocation) {
+                            alert('Geolocation is not supported by this browser.');
+                            return Promise.reject('Geolocation not supported');
+                        }
+
+                        return new Promise((resolve, reject) => {
+                            navigator.geolocation.getCurrentPosition(
+                                (position) => {
+                                    const location = {
+                                        latitude: position.coords.latitude,
+                                        longitude: position.coords.longitude,
+                                        accuracy: position.coords.accuracy
+                                    };
+                                    setCurrentLocation(location);
+                                    resolve(location);
+                                },
+                                (error) => {
+                                    console.error('Error getting location:', error);
+                                    reject(error);
+                                },
+                                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                            );
+                        });
                     };
 
-                    const handleClockOut = () => {
+                    // Capture photo
+                    const capturePhoto = () => {
+                        return new Promise((resolve, reject) => {
+                            const input = document.createElement('input');
+                            input.type = 'file';
+                            input.accept = 'image/*';
+                            input.capture = 'environment';
+                            
+                            input.onchange = (e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                    const reader = new FileReader();
+                                    reader.onload = (e) => {
+                                        resolve(e.target.result);
+                                    };
+                                    reader.readAsDataURL(file);
+                                } else {
+                                    reject('No file selected');
+                                }
+                            };
+                            
+                            input.click();
+                        });
+                    };
+
+                    const handleClockIn = async () => {
+                        try {
+                            // Get location
+                            const location = await getCurrentLocation();
+                            
+                            // Capture photo
+                            const photo = await capturePhoto();
+                            
+                            const now = new Date();
+                            const entry = {
+                                id: Date.now(),
+                                type: 'clock-in',
+                                time: now.toLocaleTimeString(),
+                                date: now.toLocaleDateString(),
+                                timestamp: now.toISOString(),
+                                location: location,
+                                photo: photo,
+                                jobSite: selectedJobSite || 'No job site selected'
+                            };
+                            
+                            setTimeEntries(prev => [...prev, entry]);
+                            setIsClockedIn(true);
+                            alert(`Clocked in at ${entry.time}\nLocation: ${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}\nJob Site: ${entry.jobSite}`);
+                        } catch (error) {
+                            console.error('Clock in error:', error);
+                            alert('Clock in failed. Please try again.');
+                        }
+                    };
+
+                    const handleClockOut = async () => {
                         if (!isClockedIn) {
                             alert('You must clock in first!');
                             return;
                         }
-                        const now = new Date();
-                        const entry = {
-                            id: Date.now(),
-                            type: 'clock-out',
-                            time: now.toLocaleTimeString(),
-                            date: now.toLocaleDateString(),
-                            timestamp: now.toISOString()
-                        };
-                        setTimeEntries(prev => [...prev, entry]);
-                        setIsClockedIn(false);
-                        alert(`Clocked out at ${entry.time}`);
+                        
+                        try {
+                            // Get location
+                            const location = await getCurrentLocation();
+                            
+                            // Capture photo
+                            const photo = await capturePhoto();
+                            
+                            const now = new Date();
+                            const entry = {
+                                id: Date.now(),
+                                type: 'clock-out',
+                                time: now.toLocaleTimeString(),
+                                date: now.toLocaleDateString(),
+                                timestamp: now.toISOString(),
+                                location: location,
+                                photo: photo,
+                                jobSite: selectedJobSite || 'No job site selected'
+                            };
+                            
+                            setTimeEntries(prev => [...prev, entry]);
+                            setIsClockedIn(false);
+                            alert(`Clocked out at ${entry.time}\nLocation: ${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}\nJob Site: ${entry.jobSite}`);
+                        } catch (error) {
+                            console.error('Clock out error:', error);
+                            alert('Clock out failed. Please try again.');
+                        }
                     };
 
                     return React.createElement('div', { className: 'container' },
@@ -1062,7 +1152,34 @@
                                         color: isClockedIn ? '#28a745' : '#dc3545',
                                         fontWeight: 'bold'
                                     } 
-                                }, isClockedIn ? '🟢 CLOCKED IN' : '🔴 CLOCKED OUT')
+                                }, isClockedIn ? '🟢 CLOCKED IN' : '🔴 CLOCKED OUT'),
+                                currentLocation && React.createElement('p', { 
+                                    style: { margin: '5px 0 0 0', fontSize: '12px', color: '#666' } 
+                                }, `📍 Location: ${currentLocation.latitude.toFixed(4)}, ${currentLocation.longitude.toFixed(4)}`)
+                            ),
+                            
+                            React.createElement('div', { style: { marginBottom: '20px' } },
+                                React.createElement('label', { 
+                                    htmlFor: 'jobSite',
+                                    style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' }
+                                }, 'Select Job Site:'),
+                                React.createElement('select', {
+                                    id: 'jobSite',
+                                    value: selectedJobSite,
+                                    onChange: (e) => setSelectedJobSite(e.target.value),
+                                    style: { 
+                                        width: '100%', 
+                                        padding: '8px', 
+                                        borderRadius: '4px', 
+                                        border: '1px solid #ccc',
+                                        marginBottom: '10px'
+                                    }
+                                },
+                                    React.createElement('option', { value: '' }, 'Select a job site...'),
+                                    jobSites.map(site => 
+                                        React.createElement('option', { key: site.id, value: site.name }, `${site.name} - ${site.address}`)
+                                    )
+                                )
                             ),
                             
                             React.createElement('div', { style: { display: 'flex', gap: '10px', marginBottom: '20px' } },
@@ -1070,12 +1187,12 @@
                                     className: 'btn btn-primary',
                                     onClick: handleClockIn,
                                     disabled: isClockedIn
-                                }, isClockedIn ? 'Already Clocked In' : 'Clock In'),
+                                }, isClockedIn ? 'Already Clocked In' : '📸 Clock In'),
                                 React.createElement('button', { 
                                     className: 'btn btn-secondary',
                                     onClick: handleClockOut,
                                     disabled: !isClockedIn
-                                }, 'Clock Out')
+                                }, '📸 Clock Out')
                             ),
                             
                             React.createElement('div', { style: { marginBottom: '20px' } },
@@ -1087,15 +1204,28 @@
                                             React.createElement('div', { 
                                                 key: entry.id,
                                                 style: { 
-                                                    padding: '8px', 
-                                                    margin: '5px 0', 
+                                                    padding: '12px', 
+                                                    margin: '8px 0', 
                                                     background: entry.type === 'clock-in' ? '#d4edda' : '#f8d7da',
-                                                    borderRadius: '4px',
+                                                    borderRadius: '6px',
                                                     border: `1px solid ${entry.type === 'clock-in' ? '#c3e6cb' : '#f5c6cb'}`
                                                 }
                                             }, 
-                                                React.createElement('strong', null, entry.type === 'clock-in' ? '🟢 Clock In' : '🔴 Clock Out'),
-                                                React.createElement('span', { style: { marginLeft: '10px' } }, `at ${entry.time}`)
+                                                React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                                                    React.createElement('div', null,
+                                                        React.createElement('strong', null, entry.type === 'clock-in' ? '🟢 Clock In' : '🔴 Clock Out'),
+                                                        React.createElement('span', { style: { marginLeft: '10px' } }, `at ${entry.time}`)
+                                                    ),
+                                                    entry.photo && React.createElement('img', {
+                                                        src: entry.photo,
+                                                        alt: 'Clock photo',
+                                                        style: { width: '40px', height: '40px', borderRadius: '4px', objectFit: 'cover' }
+                                                    })
+                                                ),
+                                                React.createElement('div', { style: { fontSize: '12px', color: '#666', marginTop: '5px' } },
+                                                    React.createElement('div', null, `📍 ${entry.location ? `${entry.location.latitude.toFixed(4)}, ${entry.location.longitude.toFixed(4)}` : 'No location'}`),
+                                                    React.createElement('div', null, `🏢 ${entry.jobSite}`)
+                                                )
                                             )
                                         )
                                     )
@@ -1108,14 +1238,113 @@
                         )
                     );
                 } else if (user.role === 'manager') {
+                    const [teamMembers, setTeamMembers] = useState([
+                        { id: 1, name: 'John Smith', role: 'employee', status: 'clocked-in', lastActivity: '2 hours ago' },
+                        { id: 2, name: 'Sarah Johnson', role: 'employee', status: 'clocked-out', lastActivity: '1 hour ago' },
+                        { id: 3, name: 'Mike Davis', role: 'employee', status: 'clocked-in', lastActivity: '30 minutes ago' }
+                    ]);
+                    const [teamStats, setTeamStats] = useState({
+                        totalMembers: 3,
+                        clockedIn: 2,
+                        clockedOut: 1,
+                        totalHoursToday: 24.5
+                    });
+
                     return React.createElement('div', { className: 'container' },
                         React.createElement('div', { className: 'card' },
                             React.createElement('h1', null, `Welcome, ${user.firstName}!`),
                             React.createElement('p', { style: { marginBottom: '20px' } }, `Role: ${user.role}`),
                             
+                            React.createElement('div', { style: { 
+                                display: 'grid', 
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                                gap: '15px', 
+                                marginBottom: '30px' 
+                            } },
+                                React.createElement('div', { 
+                                    style: { 
+                                        background: '#e3f2fd', 
+                                        padding: '15px', 
+                                        borderRadius: '8px', 
+                                        textAlign: 'center' 
+                                    } },
+                                    React.createElement('h3', { style: { margin: '0 0 5px 0', color: '#1976d2' } }, teamStats.totalMembers),
+                                    React.createElement('p', { style: { margin: '0', fontSize: '14px' } }, 'Total Team Members')
+                                ),
+                                React.createElement('div', { 
+                                    style: { 
+                                        background: '#e8f5e8', 
+                                        padding: '15px', 
+                                        borderRadius: '8px', 
+                                        textAlign: 'center' 
+                                    } },
+                                    React.createElement('h3', { style: { margin: '0 0 5px 0', color: '#2e7d32' } }, teamStats.clockedIn),
+                                    React.createElement('p', { style: { margin: '0', fontSize: '14px' } }, 'Currently Clocked In')
+                                ),
+                                React.createElement('div', { 
+                                    style: { 
+                                        background: '#fff3e0', 
+                                        padding: '15px', 
+                                        borderRadius: '8px', 
+                                        textAlign: 'center' 
+                                    } },
+                                    React.createElement('h3', { style: { margin: '0 0 5px 0', color: '#f57c00' } }, `${teamStats.totalHoursToday}h`),
+                                    React.createElement('p', { style: { margin: '0', fontSize: '14px' } }, 'Total Hours Today')
+                                )
+                            ),
+                            
                             React.createElement('div', { style: { marginBottom: '20px' } },
-                                React.createElement('h3', null, 'Team Management'),
-                                React.createElement('p', null, 'Team overview - Feature coming soon!')
+                                React.createElement('h3', null, 'Team Members'),
+                                React.createElement('div', { style: { marginTop: '15px' } },
+                                    teamMembers.map(member => 
+                                        React.createElement('div', { 
+                                            key: member.id,
+                                            style: { 
+                                                display: 'flex', 
+                                                justifyContent: 'space-between', 
+                                                alignItems: 'center',
+                                                padding: '12px', 
+                                                margin: '8px 0', 
+                                                background: member.status === 'clocked-in' ? '#d4edda' : '#f8f9fa',
+                                                borderRadius: '6px',
+                                                border: `1px solid ${member.status === 'clocked-in' ? '#c3e6cb' : '#dee2e6'}`
+                                            }
+                                        },
+                                            React.createElement('div', null,
+                                                React.createElement('strong', null, member.name),
+                                                React.createElement('div', { style: { fontSize: '12px', color: '#666' } }, member.role)
+                                            ),
+                                            React.createElement('div', { style: { textAlign: 'right' } },
+                                                React.createElement('span', { 
+                                                    style: { 
+                                                        color: member.status === 'clocked-in' ? '#28a745' : '#6c757d',
+                                                        fontWeight: 'bold',
+                                                        fontSize: '12px'
+                                                    } 
+                                                }, member.status === 'clocked-in' ? '🟢 Clocked In' : '🔴 Clocked Out'),
+                                                React.createElement('div', { style: { fontSize: '11px', color: '#999' } }, member.lastActivity)
+                                            )
+                                        )
+                                    )
+                                )
+                            ),
+                            
+                            React.createElement('div', { style: { marginBottom: '20px' } },
+                                React.createElement('h3', null, 'Quick Actions'),
+                                React.createElement('div', { style: { display: 'flex', gap: '10px', flexWrap: 'wrap' } },
+                                    React.createElement('button', { 
+                                        className: 'btn btn-primary',
+                                        onClick: () => alert('Generate team report - Feature coming soon!')
+                                    }, '📊 Generate Report'),
+                                    React.createElement('button', { 
+                                        className: 'btn btn-secondary',
+                                        onClick: () => alert('Send team message - Feature coming soon!')
+                                    }, '💬 Message Team'),
+                                    React.createElement('button', { 
+                                        className: 'btn btn-outline',
+                                        onClick: () => alert('Add team member - Feature coming soon!')
+                                    }, '➕ Add Member')
+                                )
                             ),
                             
                             React.createElement('button', { 
@@ -1125,14 +1354,119 @@
                         )
                     );
                 } else if (user.role === 'owner') {
+                    const [companyStats, setCompanyStats] = useState({
+                        totalEmployees: 12,
+                        totalManagers: 3,
+                        activeJobSites: 5,
+                        totalHoursThisWeek: 480
+                    });
+                    const [recentActivity, setRecentActivity] = useState([
+                        { id: 1, action: 'New employee hired', user: 'Sarah Johnson', time: '2 hours ago' },
+                        { id: 2, action: 'Job site created', user: 'Construction Site D', time: '4 hours ago' },
+                        { id: 3, action: 'Manager promoted', user: 'Mike Davis', time: '1 day ago' },
+                        { id: 4, action: 'Weekly report generated', user: 'System', time: '2 days ago' }
+                    ]);
+
                     return React.createElement('div', { className: 'container' },
                         React.createElement('div', { className: 'card' },
                             React.createElement('h1', null, `Welcome, ${user.firstName}!`),
                             React.createElement('p', { style: { marginBottom: '20px' } }, `Role: ${user.role}`),
                             
+                            React.createElement('div', { style: { 
+                                display: 'grid', 
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                                gap: '15px', 
+                                marginBottom: '30px' 
+                            } },
+                                React.createElement('div', { 
+                                    style: { 
+                                        background: '#e8f5e8', 
+                                        padding: '15px', 
+                                        borderRadius: '8px', 
+                                        textAlign: 'center' 
+                                    } },
+                                    React.createElement('h3', { style: { margin: '0 0 5px 0', color: '#2e7d32' } }, companyStats.totalEmployees),
+                                    React.createElement('p', { style: { margin: '0', fontSize: '14px' } }, 'Total Employees')
+                                ),
+                                React.createElement('div', { 
+                                    style: { 
+                                        background: '#e3f2fd', 
+                                        padding: '15px', 
+                                        borderRadius: '8px', 
+                                        textAlign: 'center' 
+                                    } },
+                                    React.createElement('h3', { style: { margin: '0 0 5px 0', color: '#1976d2' } }, companyStats.totalManagers),
+                                    React.createElement('p', { style: { margin: '0', fontSize: '14px' } }, 'Managers')
+                                ),
+                                React.createElement('div', { 
+                                    style: { 
+                                        background: '#fff3e0', 
+                                        padding: '15px', 
+                                        borderRadius: '8px', 
+                                        textAlign: 'center' 
+                                    } },
+                                    React.createElement('h3', { style: { margin: '0 0 5px 0', color: '#f57c00' } }, companyStats.activeJobSites),
+                                    React.createElement('p', { style: { margin: '0', fontSize: '14px' } }, 'Active Job Sites')
+                                ),
+                                React.createElement('div', { 
+                                    style: { 
+                                        background: '#f3e5f5', 
+                                        padding: '15px', 
+                                        borderRadius: '8px', 
+                                        textAlign: 'center' 
+                                    } },
+                                    React.createElement('h3', { style: { margin: '0 0 5px 0', color: '#7b1fa2' } }, `${companyStats.totalHoursThisWeek}h`),
+                                    React.createElement('p', { style: { margin: '0', fontSize: '14px' } }, 'Hours This Week')
+                                )
+                            ),
+                            
+                            React.createElement('div', { style: { marginBottom: '20px' } },
+                                React.createElement('h3', null, 'Recent Activity'),
+                                React.createElement('div', { style: { marginTop: '15px' } },
+                                    recentActivity.map(activity => 
+                                        React.createElement('div', { 
+                                            key: activity.id,
+                                            style: { 
+                                                display: 'flex', 
+                                                justifyContent: 'space-between', 
+                                                alignItems: 'center',
+                                                padding: '10px', 
+                                                margin: '5px 0', 
+                                                background: '#f8f9fa',
+                                                borderRadius: '6px',
+                                                border: '1px solid #dee2e6'
+                                            }
+                                        },
+                                            React.createElement('div', null,
+                                                React.createElement('strong', null, activity.action),
+                                                React.createElement('div', { style: { fontSize: '12px', color: '#666' } }, activity.user)
+                                            ),
+                                            React.createElement('span', { style: { fontSize: '11px', color: '#999' } }, activity.time)
+                                        )
+                                    )
+                                )
+                            ),
+                            
                             React.createElement('div', { style: { marginBottom: '20px' } },
                                 React.createElement('h3', null, 'Company Management'),
-                                React.createElement('p', null, 'Company overview - Feature coming soon!')
+                                React.createElement('div', { style: { display: 'flex', gap: '10px', flexWrap: 'wrap' } },
+                                    React.createElement('button', { 
+                                        className: 'btn btn-primary',
+                                        onClick: () => alert('Add new employee - Feature coming soon!')
+                                    }, '👤 Add Employee'),
+                                    React.createElement('button', { 
+                                        className: 'btn btn-secondary',
+                                        onClick: () => alert('Add new manager - Feature coming soon!')
+                                    }, '👔 Add Manager'),
+                                    React.createElement('button', { 
+                                        className: 'btn btn-outline',
+                                        onClick: () => alert('Create job site - Feature coming soon!')
+                                    }, '🏗️ Create Job Site'),
+                                    React.createElement('button', { 
+                                        className: 'btn btn-outline',
+                                        onClick: () => alert('Generate company report - Feature coming soon!')
+                                    }, '📊 Company Report')
+                                )
                             ),
                             
                             React.createElement('button', { 
