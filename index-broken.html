@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>TimeTracker - Multi-Company Platform</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="src/styles/main.css">
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel" src="src/contexts/AuthContext.jsx"></script>
+    <script type="text/babel" src="src/contexts/DataContext.jsx"></script>
+    <script type="text/babel" src="src/components/LoginForm.jsx"></script>
+    <script type="text/babel" src="src/components/RegisterForm.jsx"></script>
+    <script type="text/babel" src="src/components/CompanyRegistration.jsx"></script>
+    <script type="text/babel" src="src/components/EmployeeDashboard.jsx"></script>
+    <script type="text/babel" src="src/components/ManagerDashboard.jsx"></script>
+    <script type="text/babel" src="src/components/OwnerDashboard.jsx"></script>
+    <script type="text/babel" src="src/components/JobSiteModal.jsx"></script>
+    <script type="text/babel" src="src/components/EmployeeModal.jsx"></script>
+    <script type="text/babel" src="src/components/ManagerModal.jsx"></script>
+    <script type="text/babel" src="src/components/CompanySettingsModal.jsx"></script>
+    <script type="text/babel" src="src/components/App.jsx"></script>
+    
+    <script type="text/babel">
+        const { createRoot } = ReactDOM;
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

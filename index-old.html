@@ -1,0 +1,2349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>TimeTracker - Multi-Company Platform</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="src/styles/main.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            -webkit-text-size-adjust: 100%;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .login-card {
+            max-width: 400px;
+            margin: 50px auto;
+        }
+        
+        .logo {
+            width: 60px;
+            height: 60px;
+            background: #4F46E5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 24px;
+        }
+        
+        .title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: #1F2937;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #6B7280;
+            margin-bottom: 30px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: #F3F4F6;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            font-size: 16px;
+            min-height: 44px;
+        }
+        
+        .tab.active {
+            background: #4F46E5;
+            color: white;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .label {
+            display: block;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 6px;
+            font-size: 16px;
+        }
+        
+        .input, .select, .textarea {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+            min-height: 44px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        
+        .textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .input:focus, .select:focus, .textarea:focus {
+            outline: none;
+            border-color: #4F46E5;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: #4F46E5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            min-height: 44px;
+            touch-action: manipulation;
+        }
+        
+        .btn:hover {
+            background: #4338CA;
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn-secondary {
+            background: #6B7280;
+        }
+        
+        .btn-secondary:hover {
+            background: #4B5563;
+        }
+        
+        .btn-success {
+            background: #10B981;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        .btn-danger {
+            background: #EF4444;
+        }
+        
+        .btn-danger:hover {
+            background: #DC2626;
+        }
+        
+        .btn-warning {
+            background: #F59E0B;
+        }
+        
+        .btn-warning:hover {
+            background: #D97706;
+        }
+        
+        .btn-small {
+            width: auto;
+            padding: 8px 12px;
+            font-size: 14px;
+            margin: 0 5px;
+            min-height: 36px;
+        }
+        
+        .grid {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .grid-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .grid-3 {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+        
+        .grid-4 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+        
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1F2937;
+            margin-left: 15px;
+        }
+        
+        .header-subtitle {
+            font-size: 12px;
+            color: #6B7280;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-info {
+            text-align: right;
+        }
+        
+        .user-name {
+            font-weight: 500;
+            color: #1F2937;
+        }
+        
+        .user-role {
+            font-size: 12px;
+            color: #6B7280;
+            text-transform: capitalize;
+        }
+        
+        .logout-btn {
+            background: none;
+            border: none;
+            color: #6B7280;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px;
+            border-radius: 6px;
+            transition: color 0.2s;
+            min-height: 44px;
+        }
+        
+        .logout-btn:hover {
+            color: #1F2937;
+        }
+        
+        .nav-tabs {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .nav-tabs-list {
+            display: flex;
+            border-bottom: 1px solid #E5E7EB;
+            padding: 0 20px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .nav-tab {
+            padding: 20px 20px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            font-weight: 500;
+            color: #6B7280;
+            transition: all 0.2s;
+            white-space: nowrap;
+            min-height: 44px;
+        }
+        
+        .nav-tab.active {
+            color: #4F46E5;
+            border-bottom-color: #4F46E5;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+        }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            color: white;
+            font-size: 24px;
+        }
+        
+        .stat-icon.blue { background: #4F46E5; }
+        .stat-icon.green { background: #10B981; }
+        .stat-icon.purple { background: #8B5CF6; }
+        .stat-icon.orange { background: #F59E0B; }
+        
+        .stat-content h3 {
+            font-size: 12px;
+            color: #6B7280;
+            margin-bottom: 5px;
+        }
+        
+        .stat-content p {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1F2937;
+        }
+        
+        .status-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .status-active {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .status-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .status-icon {
+            width: 40px;
+            height: 40px;
+            background: #10B981;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-right: 15px;
+            font-size: 18px;
+        }
+        
+        .job-site-card {
+            background: white;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 20px;
+            transition: border-color 0.2s;
+        }
+        
+        .job-site-card:hover {
+            border-color: #4F46E5;
+        }
+        
+        .job-site-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .job-site-name {
+            font-weight: 600;
+            color: #1F2937;
+            margin-bottom: 5px;
+            font-size: 18px;
+        }
+        
+        .job-site-address {
+            color: #6B7280;
+            font-size: 14px;
+            margin-bottom: 5px;
+            line-height: 1.4;
+        }
+        
+        .job-site-distance {
+            color: #9CA3AF;
+            font-size: 12px;
+        }
+        
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        .status-badge.in-range {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+        
+        .status-badge.out-range {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+        
+        .clock-in-btn {
+            background: #4F46E5;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+            min-height: 44px;
+            touch-action: manipulation;
+        }
+        
+        .time-entry {
+            border-left: 4px solid #4F46E5;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #F9FAFB;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .time-entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .time-entry-site {
+            font-weight: 500;
+            color: #1F2937;
+        }
+        
+        .time-entry-time {
+            color: #6B7280;
+            font-size: 14px;
+        }
+        
+        .time-entry-hours {
+            font-weight: 500;
+            color: #1F2937;
+        }
+        
+        .demo-credentials {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #F3F4F6;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #6B7280;
+        }
+        
+        .demo-quick-login {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .demo-btn {
+            padding: 10px;
+            background: #E5E7EB;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #374151;
+            transition: background 0.2s;
+            min-height: 44px;
+        }
+        
+        .demo-btn:hover {
+            background: #D1D5DB;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .modal-header {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #1F2937;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn-group .btn {
+            width: auto;
+            flex: 1;
+        }
+        
+        .employee-card {
+            background: white;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 20px;
+            transition: border-color 0.2s;
+            position: relative;
+        }
+        
+        .employee-card:hover {
+            border-color: #4F46E5;
+        }
+        
+        .employee-actions {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 5px;
+        }
+        
+        .map-container {
+            height: 300px;
+            width: 100%;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 2px solid #E5E7EB;
+            touch-action: pan-x pan-y;
+        }
+        
+        .location-info {
+            background: #F3F4F6;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .location-info h4 {
+            margin-bottom: 10px;
+            color: #1F2937;
+        }
+        
+        .location-info p {
+            margin: 5px 0;
+            color: #6B7280;
+            font-size: 14px;
+        }
+        
+        .address-section {
+            background: #F8FAFC;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #E2E8F0;
+        }
+        
+        .address-section h4 {
+            margin-bottom: 15px;
+            color: #1F2937;
+            font-size: 16px;
+        }
+        
+        .address-preview {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #E5E7EB;
+            margin-top: 15px;
+        }
+        
+        .address-preview h5 {
+            color: #1F2937;
+            margin-bottom: 8px;
+        }
+        
+        .address-preview p {
+            color: #6B7280;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .geocoding-status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
+        .geocoding-status.success {
+            background: #D1FAE5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+        }
+        
+        .geocoding-status.error {
+            background: #FEE2E2;
+            color: #991B1B;
+            border: 1px solid #FECACA;
+        }
+        
+        .geocoding-status.info {
+            background: #DBEAFE;
+            color: #1E40AF;
+            border: 1px solid #BFDBFE;
+        }
+        
+        .manual-coords {
+            background: #FEF3C7;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #FDE68A;
+        }
+        
+        .manual-coords h5 {
+            color: #92400E;
+            margin-bottom: 10px;
+        }
+        
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .login-card {
+                margin: 20px auto;
+                max-width: 100%;
+            }
+            
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+                padding: 15px;
+            }
+            
+            .header-title {
+                font-size: 20px;
+                margin-left: 0;
+            }
+            
+            .nav-tabs-list {
+                padding: 0 10px;
+            }
+            
+            .nav-tab {
+                padding: 15px 15px;
+                font-size: 14px;
+            }
+            
+            .employee-actions {
+                position: static;
+                margin-top: 15px;
+                justify-content: flex-end;
+            }
+            
+            .status-active {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .job-site-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .time-entry-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .modal-content {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .stat-card {
+                padding: 20px;
+            }
+            
+            .stat-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+            
+            .stat-content p {
+                font-size: 24px;
+            }
+            
+            .map-container {
+                height: 250px;
+            }
+            
+            .demo-quick-login {
+                flex-direction: column;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+            
+            .title {
+                font-size: 24px;
+            }
+            
+            .modal-content {
+                padding: 15px;
+            }
+            
+            .map-container {
+                height: 200px;
+            }
+        }
+        
+        /* Touch improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .btn:hover, .tab:hover, .nav-tab:hover, .logout-btn:hover {
+                background: initial;
+                color: initial;
+            }
+            
+            .btn:active {
+                opacity: 0.8;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { MapPin, Clock, Users, LogOut, Plus, Play, Square, Building, UserPlus, Settings, Eye, EyeOff, Edit, Trash2, Save, X } = lucide;
+
+        // Initialize data with consistent demo accounts
+        const initializeData = () => {
+            // Always reset demo data to ensure consistency
+            const companies = [
+                { 
+                    id: 1, 
+                    name: 'Demo Construction Co', 
+                    industry: 'Construction',
+                    address: '123 Business Ave, City, State',
+                    phone: '(555) 123-4567',
+                    email: 'admin@democonstruction.com',
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            localStorage.setItem('timetracker_companies', JSON.stringify(companies));
+            
+            const users = [
+                { 
+                    id: 1, 
+                    username: 'demo-owner', 
+                    email: 'owner@democonstruction.com', 
+                    password: 'password', 
+                    role: 'owner',
+                    companyId: 1,
+                    firstName: 'John',
+                    lastName: 'Smith',
+                    createdAt: new Date().toISOString()
+                },
+                { 
+                    id: 2, 
+                    username: 'demo-manager', 
+                    email: 'manager@democonstruction.com', 
+                    password: 'password', 
+                    role: 'manager',
+                    companyId: 1,
+                    firstName: 'Sarah',
+                    lastName: 'Johnson',
+                    createdAt: new Date().toISOString()
+                },
+                { 
+                    id: 3, 
+                    username: 'demo-employee', 
+                    email: 'employee@democonstruction.com', 
+                    password: 'password', 
+                    role: 'employee',
+                    companyId: 1,
+                    firstName: 'Mike',
+                    lastName: 'Wilson',
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            localStorage.setItem('timetracker_users', JSON.stringify(users));
+            
+            const jobSites = [
+                { 
+                    id: 1, 
+                    name: 'Downtown Office', 
+                    address1: '123 Main St',
+                    address2: 'Suite 100',
+                    city: 'New York',
+                    state: 'NY',
+                    zipCode: '10001',
+                    country: 'United States',
+                    fullAddress: '123 Main St, Suite 100, New York, NY 10001, United States',
+                    latitude: 40.7128, 
+                    longitude: -74.0060, 
+                    radius: 100,
+                    companyId: 1,
+                    createdBy: 1,
+                    createdAt: new Date().toISOString()
+                },
+                { 
+                    id: 2, 
+                    name: 'Construction Site A', 
+                    address1: '456 Industrial Ave',
+                    address2: '',
+                    city: 'Brooklyn',
+                    state: 'NY',
+                    zipCode: '11201',
+                    country: 'United States',
+                    fullAddress: '456 Industrial Ave, Brooklyn, NY 11201, United States',
+                    latitude: 40.7589, 
+                    longitude: -73.9851, 
+                    radius: 150,
+                    companyId: 1,
+                    createdBy: 1,
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            localStorage.setItem('timetracker_jobsites', JSON.stringify(jobSites));
+            
+            const timeEntries = [
+                { 
+                    id: 1, 
+                    userId: 3, 
+                    jobSiteId: 1, 
+                    companyId: 1,
+                    clockInTime: '2024-09-04T09:00:00Z', 
+                    clockOutTime: '2024-09-04T17:30:00Z', 
+                    totalHours: 8.5, 
+                    status: 'completed',
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            localStorage.setItem('timetracker_timeentries', JSON.stringify(timeEntries));
+        };
+
+        const TimeTracker = () => {
+            const [currentUser, setCurrentUser] = useState(null);
+            const [currentCompany, setCurrentCompany] = useState(null);
+            const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+            const [isRegistering, setIsRegistering] = useState(false);
+            const [registrationStep, setRegistrationStep] = useState('company');
+            const [companyForm, setCompanyForm] = useState({
+                name: '', industry: '', address: '', phone: '', email: ''
+            });
+            const [ownerForm, setOwnerForm] = useState({
+                firstName: '', lastName: '', username: '', email: '', password: '', confirmPassword: ''
+            });
+            const [showPassword, setShowPassword] = useState(false);
+            const [currentLocation, setCurrentLocation] = useState(null);
+            const [activeEntry, setActiveEntry] = useState(null);
+            const [timeEntries, setTimeEntries] = useState([]);
+            const [jobSites, setJobSites] = useState([]);
+            const [companyUsers, setCompanyUsers] = useState([]);
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [showAddJobSite, setShowAddJobSite] = useState(false);
+            const [showAddUser, setShowAddUser] = useState(false);
+            const [showEditUser, setShowEditUser] = useState(false);
+            const [editingUser, setEditingUser] = useState(null);
+            const [newJobSite, setNewJobSite] = useState({ 
+                name: '', 
+                address1: '', 
+                address2: '', 
+                city: '', 
+                state: '', 
+                zipCode: '', 
+                country: 'United States',
+                latitude: '', 
+                longitude: '' 
+            });
+            const [newUser, setNewUser] = useState({ firstName: '', lastName: '', username: '', email: '', password: '', role: 'employee' });
+            const [selectedLocation, setSelectedLocation] = useState(null);
+            const [geocodingStatus, setGeocodingStatus] = useState('');
+            const [showManualCoords, setShowManualCoords] = useState(false);
+            const mapRef = useRef(null);
+            const mapInstanceRef = useRef(null);
+
+            useEffect(() => {
+                initializeData();
+                getCurrentLocation();
+            }, []);
+
+            useEffect(() => {
+                if (currentUser) {
+                    loadCompanyData();
+                }
+            }, [currentUser]);
+
+            const loadCompanyData = () => {
+                const companies = JSON.parse(localStorage.getItem('timetracker_companies') || '[]');
+                const users = JSON.parse(localStorage.getItem('timetracker_users') || '[]');
+                const entries = JSON.parse(localStorage.getItem('timetracker_timeentries') || '[]');
+                const sites = JSON.parse(localStorage.getItem('timetracker_jobsites') || '[]');
+                
+                const company = companies.find(c => c.id === currentUser.companyId);
+                setCurrentCompany(company);
+                
+                const companyEntries = entries.filter(e => e.companyId === currentUser.companyId);
+                const companySites = sites.filter(s => s.companyId === currentUser.companyId);
+                const companyEmployees = users.filter(u => u.companyId === currentUser.companyId);
+                
+                setTimeEntries(companyEntries);
+                setJobSites(companySites);
+                setCompanyUsers(companyEmployees);
+                
+                const active = companyEntries.find(entry => entry.status === 'active' && entry.userId === currentUser.id);
+                setActiveEntry(active);
+            };
+
+            const getCurrentLocation = () => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            setCurrentLocation({
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude
+                            });
+                        },
+                        () => {
+                            setCurrentLocation({ latitude: 40.7128, longitude: -74.0060 });
+                        }
+                    );
+                } else {
+                    setCurrentLocation({ latitude: 40.7128, longitude: -74.0060 });
+                }
+            };
+
+            const buildFullAddress = (addressData) => {
+                const parts = [];
+                if (addressData.address1) parts.push(addressData.address1);
+                if (addressData.address2) parts.push(addressData.address2);
+                if (addressData.city) parts.push(addressData.city);
+                if (addressData.state) parts.push(addressData.state);
+                if (addressData.zipCode) parts.push(addressData.zipCode);
+                if (addressData.country) parts.push(addressData.country);
+                return parts.join(', ');
+            };
+
+            const geocodeAddress = async (fullAddress) => {
+                try {
+                    setGeocodingStatus('Searching for location...');
+                    
+                    // Try multiple geocoding services for better results
+                    const services = [
+                        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}&limit=1&addressdetails=1`,
+                        `https://geocode.maps.co/search?q=${encodeURIComponent(fullAddress)}&api_key=free`,
+                        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(fullAddress)}.json?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw&limit=1`
+                    ];
+                    
+                    for (let i = 0; i < services.length; i++) {
+                        try {
+                            const response = await fetch(services[i]);
+                            const data = await response.json();
+                            
+                            let coords = null;
+                            
+                            if (i === 0 && data && data.length > 0) { // Nominatim
+                                coords = {
+                                    latitude: parseFloat(data[0].lat),
+                                    longitude: parseFloat(data[0].lon)
+                                };
+                            } else if (i === 1 && data && data.length > 0) { // Maps.co
+                                coords = {
+                                    latitude: parseFloat(data[0].lat),
+                                    longitude: parseFloat(data[0].lon)
+                                };
+                            } else if (i === 2 && data && data.features && data.features.length > 0) { // Mapbox
+                                coords = {
+                                    latitude: data.features[0].center[1],
+                                    longitude: data.features[0].center[0]
+                                };
+                            }
+                            
+                            if (coords && !isNaN(coords.latitude) && !isNaN(coords.longitude)) {
+                                setGeocodingStatus('✅ Location found successfully!');
+                                return coords;
+                            }
+                        } catch (error) {
+                            console.log(`Geocoding service ${i + 1} failed:`, error);
+                            continue;
+                        }
+                    }
+                    
+                    setGeocodingStatus('⚠️ Could not find exact location. You can still create the job site by clicking on the map or entering coordinates manually.');
+                    setShowManualCoords(true);
+                    return null;
+                } catch (error) {
+                    console.error('Geocoding error:', error);
+                    setGeocodingStatus('⚠️ Could not find exact location. You can still create the job site by clicking on the map or entering coordinates manually.');
+                    setShowManualCoords(true);
+                    return null;
+                }
+            };
+
+            const initializeMap = () => {
+                if (mapRef.current && !mapInstanceRef.current) {
+                    const map = L.map(mapRef.current).setView([40.7128, -74.0060], 13);
+                    
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(map);
+
+                    let marker = null;
+
+                    map.on('click', (e) => {
+                        const { lat, lng } = e.latlng;
+                        
+                        if (marker) {
+                            map.removeLayer(marker);
+                        }
+                        
+                        marker = L.marker([lat, lng]).addTo(map);
+                        
+                        setSelectedLocation({ latitude: lat, longitude: lng });
+                        setNewJobSite(prev => ({
+                            ...prev,
+                            latitude: lat.toFixed(6),
+                            longitude: lng.toFixed(6)
+                        }));
+                        setGeocodingStatus('✅ Location selected on map!');
+                    });
+
+                    mapInstanceRef.current = map;
+                }
+            };
+
+            const updateMapFromAddress = async () => {
+                const fullAddress = buildFullAddress(newJobSite);
+                if (fullAddress && mapInstanceRef.current) {
+                    const coords = await geocodeAddress(fullAddress);
+                    if (coords) {
+                        setSelectedLocation(coords);
+                        setNewJobSite(prev => ({
+                            ...prev,
+                            latitude: coords.latitude.toFixed(6),
+                            longitude: coords.longitude.toFixed(6)
+                        }));
+                        
+                        mapInstanceRef.current.setView([coords.latitude, coords.longitude], 15);
+                        
+                        // Remove existing marker and add new one
+                        mapInstanceRef.current.eachLayer((layer) => {
+                            if (layer instanceof L.Marker) {
+                                mapInstanceRef.current.removeLayer(layer);
+                            }
+                        });
+                        
+                        L.marker([coords.latitude, coords.longitude]).addTo(mapInstanceRef.current);
+                    }
+                }
+            };
+
+            useEffect(() => {
+                if (showAddJobSite && mapRef.current) {
+                    setTimeout(initializeMap, 100);
+                }
+                
+                return () => {
+                    if (mapInstanceRef.current) {
+                        mapInstanceRef.current.remove();
+                        mapInstanceRef.current = null;
+                    }
+                };
+            }, [showAddJobSite]);
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                const users = JSON.parse(localStorage.getItem('timetracker_users') || '[]');
+                
+                // Normalize input for case-insensitive comparison
+                const normalizedUsername = loginForm.username.toLowerCase().trim();
+                const normalizedPassword = loginForm.password.trim();
+                
+                const user = users.find(u => 
+                    u.username.toLowerCase() === normalizedUsername && 
+                    u.password === normalizedPassword
+                );
+                
+                if (user) {
+                    setCurrentUser(user);
+                } else {
+                    alert('Invalid credentials. Please check your username and password.');
+                }
+            };
+
+            const handleQuickLogin = (username, password) => {
+                setLoginForm({ username, password });
+                const users = JSON.parse(localStorage.getItem('timetracker_users') || '[]');
+                const user = users.find(u => u.username === username && u.password === password);
+                if (user) {
+                    setCurrentUser(user);
+                }
+            };
+
+            const handleCompanyRegistration = (e) => {
+                e.preventDefault();
+                setRegistrationStep('owner');
+            };
+
+            const handleOwnerRegistration = (e) => {
+                e.preventDefault();
+                
+                if (ownerForm.password !== ownerForm.confirmPassword) {
+                    alert('Passwords do not match');
+                    return;
+                }
+
+                const companies = JSON.parse(localStorage.getItem('timetracker_companies') || '[]');
+                const users = JSON.parse(localStorage.getItem('timetracker_users') || '[]');
+                
+                if (users.find(u => u.username === ownerForm.username)) {
+                    alert('Username already exists');
+                    return;
+                }
+
+                const newCompany = {
+                    id: companies.length + 1,
+                    ...companyForm,
+                    createdAt: new Date().toISOString()
+                };
+                
+                companies.push(newCompany);
+                localStorage.setItem('timetracker_companies', JSON.stringify(companies));
+
+                const newOwner = {
+                    id: users.length + 1,
+                    ...ownerForm,
+                    role: 'owner',
+                    companyId: newCompany.id,
+                    createdAt: new Date().toISOString()
+                };
+                delete newOwner.confirmPassword;
+                
+                users.push(newOwner);
+                localStorage.setItem('timetracker_users', JSON.stringify(users));
+                
+                setCurrentUser(newOwner);
+                setCurrentCompany(newCompany);
+            };
+
+            const handleEditUser = (user) => {
+                setEditingUser({...user});
+                setShowEditUser(true);
+            };
+
+            const handleUpdateUser = (e) => {
+                e.preventDefault();
+                const users = JSON.parse(localStorage.getItem('timetracker_users') || '[]');
+                const userIndex = users.findIndex(u => u.id === editingUser.id);
+                
+                if (userIndex !== -1) {
+                    if (editingUser.newPassword) {
+                        editingUser.password = editingUser.newPassword;
+                        delete editingUser.newPassword;
+                    }
+                    users[userIndex] = {...editingUser};
+                    localStorage.setItem('timetracker_users', JSON.stringify(users));
+                    loadCompanyData();
+                    setShowEditUser(false);
+                    setEditingUser(null);
+                }
+            };
+
+            const handleDeleteUser = (userId) => {
+                if (confirm('Are you sure you want to delete this employee? This action cannot be undone.')) {
+                    const users = JSON.parse(localStorage.getItem('timetracker_users') || '[]');
+                    const filteredUsers = users.filter(u => u.id !== userId);
+                    localStorage.setItem('timetracker_users', JSON.stringify(filteredUsers));
+                    
+                    // Also remove their time entries
+                    const entries = JSON.parse(localStorage.getItem('timetracker_timeentries') || '[]');
+                    const filteredEntries = entries.filter(e => e.userId !== userId);
+                    localStorage.setItem('timetracker_timeentries', JSON.stringify(filteredEntries));
+                    
+                    loadCompanyData();
+                }
+            };
+
+            const calculateDistance = (lat1, lon1, lat2, lon2) => {
+                const R = 6371e3;
+                const φ1 = lat1 * Math.PI/180;
+                const φ2 = lat2 * Math.PI/180;
+                const Δφ = (lat2-lat1) * Math.PI/180;
+                const Δλ = (lon2-lon1) * Math.PI/180;
+
+                const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                          Math.cos(φ1) * Math.cos(φ2) *
+                          Math.sin(Δλ/2) * Math.sin(Δλ/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+                return R * c;
+            };
+
+            const isWithinJobSite = (jobSite) => {
+                if (!currentLocation) return false;
+                const distance = calculateDistance(
+                    currentLocation.latitude, currentLocation.longitude,
+                    jobSite.latitude, jobSite.longitude
+                );
+                return distance <= jobSite.radius;
+            };
+
+            const handleClockIn = (jobSite) => {
+                if (!isWithinJobSite(jobSite)) {
+                    alert('You must be within the job site radius to clock in');
+                    return;
+                }
+
+                const entries = JSON.parse(localStorage.getItem('timetracker_timeentries') || '[]');
+                const newEntry = {
+                    id: entries.length + 1,
+                    userId: currentUser.id,
+                    jobSiteId: jobSite.id,
+                    companyId: currentUser.companyId,
+                    clockInTime: new Date().toISOString(),
+                    clockOutTime: null,
+                    totalHours: 0,
+                    status: 'active',
+                    createdAt: new Date().toISOString()
+                };
+                
+                entries.push(newEntry);
+                localStorage.setItem('timetracker_timeentries', JSON.stringify(entries));
+                setActiveEntry(newEntry);
+                setTimeEntries([...timeEntries, newEntry]);
+            };
+
+            const handleClockOut = () => {
+                if (!activeEntry) return;
+                
+                const entries = JSON.parse(localStorage.getItem('timetracker_timeentries') || '[]');
+                const entryIndex = entries.findIndex(e => e.id === activeEntry.id);
+                
+                if (entryIndex !== -1) {
+                    const clockOutTime = new Date();
+                    const clockInTime = new Date(activeEntry.clockInTime);
+                    const totalHours = (clockOutTime - clockInTime) / (1000 * 60 * 60);
+                    
+                    entries[entryIndex] = {
+                        ...entries[entryIndex],
+                        clockOutTime: clockOutTime.toISOString(),
+                        totalHours: Math.round(totalHours * 100) / 100,
+                        status: 'completed'
+                    };
+                    
+                    localStorage.setItem('timetracker_timeentries', JSON.stringify(entries));
+                    setActiveEntry(null);
+                    loadCompanyData();
+                }
+            };
+
+            const formatTime = (dateString) => {
+                return new Date(dateString).toLocaleString();
+            };
+
+            const getJobSiteName = (jobSiteId) => {
+                const site = jobSites.find(s => s.id === jobSiteId);
+                return site ? site.name : 'Unknown Site';
+            };
+
+            const getUserName = (userId) => {
+                const user = companyUsers.find(u => u.id === userId);
+                return user ? `${user.firstName} ${user.lastName}` : 'Unknown User';
+            };
+
+            if (!currentUser) {
+                return (
+                    <div className="container">
+                        <div className="login-card card">
+                            <div className="logo">📍</div>
+                            <h1 className="title">TimeTracker</h1>
+                            <p className="subtitle">Multi-Company Timesheet Platform</p>
+
+                            <div className="tabs">
+                                <button 
+                                    className={`tab ${!isRegistering ? 'active' : ''}`}
+                                    onClick={() => {setIsRegistering(false); setRegistrationStep('company');}}
+                                >
+                                    Login
+                                </button>
+                                <button 
+                                    className={`tab ${isRegistering ? 'active' : ''}`}
+                                    onClick={() => {setIsRegistering(true); setRegistrationStep('company');}}
+                                >
+                                    Start Company
+                                </button>
+                            </div>
+
+                            {!isRegistering ? (
+                                <form onSubmit={handleLogin}>
+                                    <div className="form-group">
+                                        <label className="label">Username</label>
+                                        <input
+                                            type="text"
+                                            className="input"
+                                            value={loginForm.username}
+                                            onChange={(e) => setLoginForm({...loginForm, username: e.target.value})}
+                                            placeholder="Enter your username"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="label">Password</label>
+                                        <input
+                                            type="password"
+                                            className="input"
+                                            value={loginForm.password}
+                                            onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                                            placeholder="Enter your password"
+                                            required
+                                        />
+                                    </div>
+                                    <button type="submit" className="btn">Sign In</button>
+                                </form>
+                            ) : registrationStep === 'company' ? (
+                                <form onSubmit={handleCompanyRegistration}>
+                                    <h3 style={{textAlign: 'center', marginBottom: '20px', fontSize: '18px'}}>Create Your Company</h3>
+                                    <div className="form-group">
+                                        <label className="label">Company Name</label>
+                                        <input
+                                            type="text"
+                                            className="input"
+                                            value={companyForm.name}
+                                            onChange={(e) => setCompanyForm({...companyForm, name: e.target.value})}
+                                            placeholder="Your Company Name"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="label">Industry</label>
+                                        <select
+                                            className="select"
+                                            value={companyForm.industry}
+                                            onChange={(e) => setCompanyForm({...companyForm, industry: e.target.value})}
+                                            required
+                                        >
+                                            <option value="">Select Industry</option>
+                                            <option value="Construction">Construction</option>
+                                            <option value="Healthcare">Healthcare</option>
+                                            <option value="Retail">Retail</option>
+                                            <option value="Manufacturing">Manufacturing</option>
+                                            <option value="Transportation">Transportation</option>
+                                            <option value="Security">Security</option>
+                                            <option value="Cleaning">Cleaning Services</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="label">Company Address</label>
+                                        <input
+                                            type="text"
+                                            className="input"
+                                            value={companyForm.address}
+                                            onChange={(e) => setCompanyForm({...companyForm, address: e.target.value})}
+                                            placeholder="123 Business St, City, State"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="label">Phone Number</label>
+                                        <input
+                                            type="tel"
+                                            className="input"
+                                            value={companyForm.phone}
+                                            onChange={(e) => setCompanyForm({...companyForm, phone: e.target.value})}
+                                            placeholder="(555) 123-4567"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="label">Company Email</label>
+                                        <input
+                                            type="email"
+                                            className="input"
+                                            value={companyForm.email}
+                                            onChange={(e) => setCompanyForm({...companyForm, email: e.target.value})}
+                                            placeholder="admin@yourcompany.com"
+                                            required
+                                        />
+                                    </div>
+                                    <button type="submit" className="btn">Continue to Owner Account</button>
+                                </form>
+                            ) : (
+                                <form onSubmit={handleOwnerRegistration}>
+                                    <h3 style={{textAlign: 'center', marginBottom: '20px', fontSize: '18px'}}>Create Owner Account</h3>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label className="label">First Name</label>
+                                            <input
+                                                type="text"
+                                                className="input"
+                                                value={ownerForm.firstName}
+                                                onChange={(e) => setOwnerForm({...ownerForm, firstName: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="label">Last Name</label>
+                                            <input
+                                                type="text"
+                                                className="input"
+                                                value={ownerForm.lastName}
+                                                onChange={(e) => setOwnerForm({...ownerForm, lastName: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="label">Username</label>
+                                        <input
+                                            type="text"
+                                            className="input"
+                                            value={ownerForm.username}
+                                            onChange={(e) => setOwnerForm({...ownerForm, username: e.target.value})}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="label">Email</label>
+                                        <input
+                                            type="email"
+                                            className="input"
+                                            value={ownerForm.email}
+                                            onChange={(e) => setOwnerForm({...ownerForm, email: e.target.value})}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="label">Password</label>
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            className="input"
+                                            value={ownerForm.password}
+                                            onChange={(e) => setOwnerForm({...ownerForm, password: e.target.value})}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="label">Confirm Password</label>
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            className="input"
+                                            value={ownerForm.confirmPassword}
+                                            onChange={(e) => setOwnerForm({...ownerForm, confirmPassword: e.target.value})}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="btn-group">
+                                        <button
+                                            type="button"
+                                            className="btn btn-secondary"
+                                            onClick={() => setRegistrationStep('company')}
+                                        >
+                                            Back
+                                        </button>
+                                        <button type="submit" className="btn">Create Account</button>
+                                    </div>
+                                </form>
+                            )}
+
+                            <div className="demo-credentials">
+                                <p><strong>Demo Accounts - Click to Login:</strong></p>
+                                <div className="demo-quick-login">
+                                    <button 
+                                        className="demo-btn"
+                                        onClick={() => handleQuickLogin('demo-owner', 'password')}
+                                    >
+                                        👑 Owner: demo-owner / password
+                                    </button>
+                                    <button 
+                                        className="demo-btn"
+                                        onClick={() => handleQuickLogin('demo-manager', 'password')}
+                                    >
+                                        👨‍💼 Manager: demo-manager / password
+                                    </button>
+                                    <button 
+                                        className="demo-btn"
+                                        onClick={() => handleQuickLogin('demo-employee', 'password')}
+                                    >
+                                        👷 Employee: demo-employee / password
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div>
+                    <div className="header">
+                        <div className="header-left">
+                            <div className="logo">📍</div>
+                            <div>
+                                <div className="header-title">TimeTracker</div>
+                                <div className="header-subtitle">{currentCompany?.name}</div>
+                            </div>
+                        </div>
+                        <div className="header-right">
+                            <div className="user-info">
+                                <div className="user-name">{currentUser.firstName} {currentUser.lastName}</div>
+                                <div className="user-role">{currentUser.role}</div>
+                            </div>
+                            <button className="logout-btn" onClick={() => setCurrentUser(null)}>
+                                🚪 Logout
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="container">
+                        {currentUser.role === 'employee' ? (
+                            <div>
+                                {/* Employee Current Status */}
+                                <div className="status-card">
+                                    <h2 style={{marginBottom: '20px', fontSize: '20px'}}>Current Status</h2>
+                                    {activeEntry ? (
+                                        <div className="status-active">
+                                            <div className="status-info">
+                                                <div className="status-icon">▶️</div>
+                                                <div>
+                                                    <div style={{fontWeight: '500'}}>Clocked In</div>
+                                                    <div style={{fontSize: '14px', color: '#6B7280'}}>
+                                                        Since {formatTime(activeEntry.clockInTime)}
+                                                    </div>
+                                                    <div style={{fontSize: '14px', color: '#6B7280'}}>
+                                                        Site: {getJobSiteName(activeEntry.jobSiteId)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button className="btn btn-danger" onClick={handleClockOut}>
+                                                ⏹️ Clock Out
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <p style={{color: '#6B7280'}}>Not currently clocked in</p>
+                                    )}
+                                </div>
+
+                                {/* Available Job Sites */}
+                                <div className="card" style={{marginTop: '20px'}}>
+                                    <h2 style={{marginBottom: '20px', fontSize: '20px'}}>Available Job Sites</h2>
+                                    <div className="grid">
+                                        {jobSites.map(site => (
+                                            <div key={site.id} className="job-site-card">
+                                                <div className="job-site-header">
+                                                    <div>
+                                                        <div className="job-site-name">{site.name}</div>
+                                                        <div className="job-site-address">{site.fullAddress || site.address}</div>
+                                                        <div className="job-site-distance">
+                                                            Distance: {currentLocation ? 
+                                                                Math.round(calculateDistance(
+                                                                    currentLocation.latitude, currentLocation.longitude,
+                                                                    site.latitude, site.longitude
+                                                                )) : '---'} meters
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <div className={`status-badge ${isWithinJobSite(site) ? 'in-range' : 'out-range'}`}>
+                                                            {isWithinJobSite(site) ? 'In Range' : 'Out of Range'}
+                                                        </div>
+                                                        {!activeEntry && isWithinJobSite(site) && (
+                                                            <button
+                                                                className="clock-in-btn"
+                                                                onClick={() => handleClockIn(site)}
+                                                            >
+                                                                Clock In
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Recent Time Entries */}
+                                <div className="card" style={{marginTop: '20px'}}>
+                                    <h2 style={{marginBottom: '20px', fontSize: '20px'}}>My Time Entries</h2>
+                                    {timeEntries
+                                        .filter(entry => entry.userId === currentUser.id)
+                                        .slice(-5)
+                                        .reverse()
+                                        .map(entry => (
+                                            <div key={entry.id} className="time-entry">
+                                                <div className="time-entry-header">
+                                                    <div>
+                                                        <div className="time-entry-site">{getJobSiteName(entry.jobSiteId)}</div>
+                                                        <div className="time-entry-time">
+                                                            {formatTime(entry.clockInTime)} - {entry.clockOutTime ? formatTime(entry.clockOutTime) : 'Active'}
+                                                        </div>
+                                                    </div>
+                                                    <div className="time-entry-hours">
+                                                        {entry.totalHours ? `${entry.totalHours}h` : 'Active'}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div>
+                                {/* Manager/Owner Navigation */}
+                                <div className="nav-tabs">
+                                    <div className="nav-tabs-list">
+                                        <button
+                                            className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
+                                            onClick={() => setActiveTab('dashboard')}
+                                        >
+                                            Dashboard
+                                        </button>
+                                        <button
+                                            className={`nav-tab ${activeTab === 'employees' ? 'active' : ''}`}
+                                            onClick={() => setActiveTab('employees')}
+                                        >
+                                            Team Management
+                                        </button>
+                                        <button
+                                            className={`nav-tab ${activeTab === 'jobsites' ? 'active' : ''}`}
+                                            onClick={() => setActiveTab('jobsites')}
+                                        >
+                                            Job Sites
+                                        </button>
+                                        {currentUser.role === 'owner' && (
+                                            <button
+                                                className={`nav-tab ${activeTab === 'company' ? 'active' : ''}`}
+                                                onClick={() => setActiveTab('company')}
+                                            >
+                                                Company Settings
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {activeTab === 'dashboard' && (
+                                    <div>
+                                        {/* Dashboard Stats */}
+                                        <div className="grid grid-4" style={{marginBottom: '30px'}}>
+                                            <div className="stat-card">
+                                                <div className="stat-icon blue">👥</div>
+                                                <div className="stat-content">
+                                                    <h3>Active Now</h3>
+                                                    <p>{timeEntries.filter(entry => entry.status === 'active').length}</p>
+                                                </div>
+                                            </div>
+                                            <div className="stat-card">
+                                                <div className="stat-icon green">👥</div>
+                                                <div className="stat-content">
+                                                    <h3>Total Employees</h3>
+                                                    <p>{companyUsers.filter(u => u.role === 'employee').length}</p>
+                                                </div>
+                                            </div>
+                                            <div className="stat-card">
+                                                <div className="stat-icon purple">📍</div>
+                                                <div className="stat-content">
+                                                    <h3>Job Sites</h3>
+                                                    <p>{jobSites.length}</p>
+                                                </div>
+                                            </div>
+                                            <div className="stat-card">
+                                                <div className="stat-icon orange">⏰</div>
+                                                <div className="stat-content">
+                                                    <h3>Hours Today</h3>
+                                                    <p>{timeEntries
+                                                        .filter(entry => entry.status === 'completed')
+                                                        .reduce((sum, entry) => sum + (entry.totalHours || 0), 0)
+                                                        .toFixed(1)}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Recent Activity */}
+                                        <div className="card">
+                                            <h2 style={{marginBottom: '20px', fontSize: '20px'}}>Recent Activity</h2>
+                                            {timeEntries.slice(-10).reverse().map(entry => (
+                                                <div key={entry.id} className="time-entry">
+                                                    <div className="time-entry-header">
+                                                        <div>
+                                                            <div className="time-entry-site">{getUserName(entry.userId)}</div>
+                                                            <div className="time-entry-time">{getJobSiteName(entry.jobSiteId)}</div>
+                                                            <div style={{fontSize: '12px', color: '#9CA3AF'}}>
+                                                                {formatTime(entry.clockInTime)} - {entry.clockOutTime ? formatTime(entry.clockOutTime) : 'Active'}
+                                                            </div>
+                                                        </div>
+                                                        <div style={{textAlign: 'right'}}>
+                                                            <div className={`status-badge ${entry.status === 'active' ? 'in-range' : 'out-range'}`}>
+                                                                {entry.status}
+                                                            </div>
+                                                            {entry.totalHours && (
+                                                                <div style={{fontSize: '14px', fontWeight: '500', marginTop: '5px'}}>
+                                                                    {entry.totalHours}h
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'employees' && (
+                                    <div className="card">
+                                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px'}}>
+                                            <h2 style={{fontSize: '20px'}}>Team Management</h2>
+                                            <button className="btn" onClick={() => setShowAddUser(true)}>
+                                                ➕ Add Team Member
+                                            </button>
+                                        </div>
+
+                                        <div className="grid">
+                                            {companyUsers.map(user => (
+                                                <div key={user.id} className="employee-card">
+                                                    {(currentUser.role === 'owner' || (currentUser.role === 'manager' && user.role === 'employee')) && (
+                                                        <div className="employee-actions">
+                                                            <button 
+                                                                className="btn btn-small btn-warning"
+                                                                onClick={() => handleEditUser(user)}
+                                                                title="Edit Employee"
+                                                            >
+                                                                ✏️
+                                                            </button>
+                                                            <button 
+                                                                className="btn btn-small btn-danger"
+                                                                onClick={() => handleDeleteUser(user.id)}
+                                                                title="Delete Employee"
+                                                            >
+                                                                🗑️
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                    <div className="job-site-header">
+                                                        <div>
+                                                            <div className="job-site-name">{user.firstName} {user.lastName}</div>
+                                                            <div className="job-site-address">{user.email}</div>
+                                                            <div className="job-site-distance">Username: {user.username}</div>
+                                                        </div>
+                                                        <div className={`status-badge ${
+                                                            user.role === 'owner' ? 'in-range' :
+                                                            user.role === 'manager' ? 'out-range' : 'in-range'
+                                                        }`} style={{textTransform: 'capitalize'}}>
+                                                            {user.role}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'jobsites' && (
+                                    <div className="card">
+                                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px'}}>
+                                            <h2 style={{fontSize: '20px'}}>Job Sites</h2>
+                                            <button className="btn" onClick={() => setShowAddJobSite(true)}>
+                                                ➕ Add Job Site
+                                            </button>
+                                        </div>
+
+                                        <div className="grid">
+                                            {jobSites.map(site => (
+                                                <div key={site.id} className="job-site-card">
+                                                    <div className="job-site-name">{site.name}</div>
+                                                    <div className="job-site-address">{site.fullAddress || site.address}</div>
+                                                    <div className="job-site-distance">
+                                                        Coordinates: {site.latitude}, {site.longitude} | Radius: {site.radius}m
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'company' && currentUser.role === 'owner' && (
+                                    <div className="card">
+                                        <h2 style={{marginBottom: '20px', fontSize: '20px'}}>Company Information</h2>
+                                        <div className="grid grid-2">
+                                            <div>
+                                                <label className="label">Company Name</label>
+                                                <p style={{fontSize: '18px', fontWeight: '500'}}>{currentCompany?.name}</p>
+                                            </div>
+                                            <div>
+                                                <label className="label">Industry</label>
+                                                <p style={{fontSize: '18px'}}>{currentCompany?.industry}</p>
+                                            </div>
+                                            <div>
+                                                <label className="label">Address</label>
+                                                <p style={{fontSize: '18px'}}>{currentCompany?.address}</p>
+                                            </div>
+                                            <div>
+                                                <label className="label">Phone</label>
+                                                <p style={{fontSize: '18px'}}>{currentCompany?.phone}</p>
+                                            </div>
+                                            <div>
+                                                <label className="label">Email</label>
+                                                <p style={{fontSize: '18px'}}>{currentCompany?.email}</p>
+                                            </div>
+                                            <div>
+                                                <label className="label">Created</label>
+                                                <p style={{fontSize: '18px'}}>{currentCompany?.createdAt ? formatTime(currentCompany.createdAt) : 'N/A'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Add Job Site Modal */}
+                    {showAddJobSite && (
+                        <div className="modal">
+                            <div className="modal-content">
+                                <div className="modal-header">Add New Job Site</div>
+                                <form onSubmit={(e) => {
+                                    e.preventDefault();
+                                    
+                                    // Allow creation even without coordinates if address is provided
+                                    let finalLat = selectedLocation ? selectedLocation.latitude : parseFloat(newJobSite.latitude);
+                                    let finalLng = selectedLocation ? selectedLocation.longitude : parseFloat(newJobSite.longitude);
+                                    
+                                    // If no coordinates, use default location but warn user
+                                    if (!finalLat || !finalLng || isNaN(finalLat) || isNaN(finalLng)) {
+                                        if (confirm('No GPS coordinates found. The job site will be created with default coordinates (New York). You can edit it later with the correct location. Continue?')) {
+                                            finalLat = 40.7128;
+                                            finalLng = -74.0060;
+                                        } else {
+                                            return;
+                                        }
+                                    }
+                                    
+                                    const sites = JSON.parse(localStorage.getItem('timetracker_jobsites') || '[]');
+                                    const fullAddress = buildFullAddress(newJobSite);
+                                    const newSite = {
+                                        id: sites.length + 1,
+                                        name: newJobSite.name,
+                                        address1: newJobSite.address1,
+                                        address2: newJobSite.address2,
+                                        city: newJobSite.city,
+                                        state: newJobSite.state,
+                                        zipCode: newJobSite.zipCode,
+                                        country: newJobSite.country,
+                                        fullAddress: fullAddress,
+                                        latitude: finalLat,
+                                        longitude: finalLng,
+                                        radius: 100,
+                                        companyId: currentUser.companyId,
+                                        createdBy: currentUser.id,
+                                        createdAt: new Date().toISOString()
+                                    };
+                                    sites.push(newSite);
+                                    localStorage.setItem('timetracker_jobsites', JSON.stringify(sites));
+                                    setJobSites([...jobSites, newSite]);
+                                    setNewJobSite({ 
+                                        name: '', 
+                                        address1: '', 
+                                        address2: '', 
+                                        city: '', 
+                                        state: '', 
+                                        zipCode: '', 
+                                        country: 'United States',
+                                        latitude: '', 
+                                        longitude: '' 
+                                    });
+                                    setSelectedLocation(null);
+                                    setGeocodingStatus('');
+                                    setShowManualCoords(false);
+                                    setShowAddJobSite(false);
+                                }}>
+                                    <div className="form-group">
+                                        <label className="label">Site Name</label>
+                                        <input
+                                            type="text"
+                                            className="input"
+                                            value={newJobSite.name}
+                                            onChange={(e) => setNewJobSite({...newJobSite, name: e.target.value})}
+                                            placeholder="Enter job site name"
+                                            required
+                                        />
+                                    </div>
+                                    
+                                    <div className="address-section">
+                                        <h4>📍 Job Site Address</h4>
+                                        <div className="form-group">
+                                            <label className="label">Address Line 1</label>
+                                            <input
+                                                type="text"
+                                                className="input"
+                                                value={newJobSite.address1}
+                                                onChange={(e) => setNewJobSite({...newJobSite, address1: e.target.value})}
+                                                placeholder="123 Main Street"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="label">Address Line 2 (Optional)</label>
+                                            <input
+                                                type="text"
+                                                className="input"
+                                                value={newJobSite.address2}
+                                                onChange={(e) => setNewJobSite({...newJobSite, address2: e.target.value})}
+                                                placeholder="Suite 100, Building A, etc."
+                                            />
+                                        </div>
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label className="label">City</label>
+                                                <input
+                                                    type="text"
+                                                    className="input"
+                                                    value={newJobSite.city}
+                                                    onChange={(e) => setNewJobSite({...newJobSite, city: e.target.value})}
+                                                    placeholder="New York"
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="label">State/Province</label>
+                                                <input
+                                                    type="text"
+                                                    className="input"
+                                                    value={newJobSite.state}
+                                                    onChange={(e) => setNewJobSite({...newJobSite, state: e.target.value})}
+                                                    placeholder="NY"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label className="label">ZIP/Postal Code</label>
+                                                <input
+                                                    type="text"
+                                                    className="input"
+                                                    value={newJobSite.zipCode}
+                                                    onChange={(e) => setNewJobSite({...newJobSite, zipCode: e.target.value})}
+                                                    placeholder="10001"
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="label">Country</label>
+                                                <select
+                                                    className="select"
+                                                    value={newJobSite.country}
+                                                    onChange={(e) => setNewJobSite({...newJobSite, country: e.target.value})}
+                                                >
+                                                    <option value="United States">United States</option>
+                                                    <option value="Canada">Canada</option>
+                                                    <option value="United Kingdom">United Kingdom</option>
+                                                    <option value="Australia">Australia</option>
+                                                    <option value="Other">Other</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        
+                                        <button 
+                                            type="button" 
+                                            className="btn btn-secondary" 
+                                            onClick={updateMapFromAddress}
+                                            style={{marginTop: '15px'}}
+                                        >
+                                            📍 Find Location on Map
+                                        </button>
+                                        
+                                        {geocodingStatus && (
+                                            <div className={`geocoding-status ${
+                                                geocodingStatus.includes('✅') ? 'success' : 
+                                                geocodingStatus.includes('⚠️') ? 'error' : 'info'
+                                            }`}>
+                                                {geocodingStatus}
+                                            </div>
+                                        )}
+                                        
+                                        {buildFullAddress(newJobSite) && (
+                                            <div className="address-preview">
+                                                <h5>Address Preview:</h5>
+                                                <p>{buildFullAddress(newJobSite)}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="form-group">
+                                        <label className="label">📍 Select Location on Map</label>
+                                        <p style={{fontSize: '14px', color: '#6B7280', marginBottom: '10px'}}>
+                                            Click on the map to select the exact location, or use "Find Location on Map" button above
+                                        </p>
+                                        <div ref={mapRef} className="map-container"></div>
+                                    </div>
+
+                                    {showManualCoords && (
+                                        <div className="manual-coords">
+                                            <h5>⚙️ Manual Coordinates (Optional)</h5>
+                                            <p style={{fontSize: '14px', marginBottom: '10px'}}>
+                                                If you know the exact coordinates, you can enter them here:
+                                            </p>
+                                            <div className="form-row">
+                                                <div className="form-group">
+                                                    <label className="label">Latitude</label>
+                                                    <input
+                                                        type="number"
+                                                        step="any"
+                                                        className="input"
+                                                        value={newJobSite.latitude}
+                                                        onChange={(e) => setNewJobSite({...newJobSite, latitude: e.target.value})}
+                                                        placeholder="40.7128"
+                                                    />
+                                                </div>
+                                                <div className="form-group">
+                                                    <label className="label">Longitude</label>
+                                                    <input
+                                                        type="number"
+                                                        step="any"
+                                                        className="input"
+                                                        value={newJobSite.longitude}
+                                                        onChange={(e) => setNewJobSite({...newJobSite, longitude: e.target.value})}
+                                                        placeholder="-74.0060"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {selectedLocation && (
+                                        <div className="location-info">
+                                            <h4>✅ Selected Location</h4>
+                                            <p><strong>Coordinates:</strong> {selectedLocation.latitude.toFixed(6)}, {selectedLocation.longitude.toFixed(6)}</p>
+                                            <p><strong>Radius:</strong> 100 meters (default)</p>
+                                        </div>
+                                    )}
+
+                                    <div className="btn-group">
+                                        <button type="submit" className="btn btn-success">Create Site</button>
+                                        <button type="button" className="btn btn-secondary" onClick={() => {
+                                            setShowAddJobSite(false);
+                                            setSelectedLocation(null);
+                                            setGeocodingStatus('');
+                                            setShowManualCoords(false);
+                                            setNewJobSite({ 
+                                                name: '', 
+                                                address1: '', 
+                                                address2: '', 
+                                                city: '', 
+                                                state: '', 
+                                                zipCode: '', 
+                                                country: 'United States',
+                                                latitude: '', 
+                                                longitude: '' 
+                                            });
+                                        }}>Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Add User Modal */}
+                    {showAddUser && (
+                        <div className="modal">
+                            <div className="modal-content">
+                                <div className="modal-header">Add Team Member</div>
+                                <form onSubmit={(e) => {
+                                    e.preventDefault();
+                                    const users = JSON.parse(localStorage.getItem('timetracker_users') || '[]');
+                                    if (users.find(u => u.username === newUser.username)) {
+                                        alert('Username already exists');
+                                        return;
+                                    }
+                                    const user = {
+                                        id: users.length + 1,
+                                        ...newUser,
+                                        companyId: currentUser.companyId,
+                                        createdAt: new Date().toISOString()
+                                    };
+                                    users.push(user);
+                                    localStorage.setItem('timetracker_users', JSON.stringify(users));
+                                    setCompanyUsers([...companyUsers, user]);
+                                    setNewUser({ firstName: '', lastName: '', username: '', email: '', password: '', role: 'employee' });
+                                    setShowAddUser(false);
+                                }}>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label className="label">First Name</label>
+                                            <input
+                                                type="text"
+                                                className="input"
+                                                value={newUser.firstName}
+                                                onChange={(e) => setNewUser({...newUser, firstName: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="label">Last Name</label>
+                                            <input
+                                                type="text"
+                                                className="input"
+                                                value={newUser.lastName}
+                                                onChange={(e) => setNewUser({...newUser, lastName: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label className="label">Username</label>
+                                            <input
+                                                type="text"
+                                                className="input"
+                                                value={newUser.username}
+                                                onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="label">Email</label>
+                                            <input
+                                                type="email"
+                                                className="input"
+                                                value={newUser.email}
+                                                onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label className="label">Password</label>
+                                            <input
+                                                type="password"
+                                                className="input"
+                                                value={newUser.password}
+                                                onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="label">Role</label>
+                                            <select
+                                                className="select"
+                                                value={newUser.role}
+                                                onChange={(e) => setNewUser({...newUser, role: e.target.value})}
+                                            >
+                                                <option value="employee">Employee</option>
+                                                {currentUser.role === 'owner' && <option value="manager">Manager</option>}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className="btn-group">
+                                        <button type="submit" className="btn btn-success">Add Team Member</button>
+                                        <button type="button" className="btn btn-secondary" onClick={() => setShowAddUser(false)}>Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Edit User Modal */}
+                    {showEditUser && editingUser && (
+                        <div className="modal">
+                            <div className="modal-content">
+                                <div className="modal-header">Edit Employee Information</div>
+                                <form onSubmit={handleUpdateUser}>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label className="label">First Name</label>
+                                            <input
+                                                type="text"
+                                                className="input"
+                                                value={editingUser.firstName}
+                                                onChange={(e) => setEditingUser({...editingUser, firstName: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="label">Last Name</label>
+                                            <input
+                                                type="text"
+                                                className="input"
+                                                value={editingUser.lastName}
+                                                onChange={(e) => setEditingUser({...editingUser, lastName: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label className="label">Username</label>
+                                            <input
+                                                type="text"
+                                                className="input"
+                                                value={editingUser.username}
+                                                onChange={(e) => setEditingUser({...editingUser, username: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="label">Email</label>
+                                            <input
+                                                type="email"
+                                                className="input"
+                                                value={editingUser.email}
+                                                onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label className="label">New Password (leave blank to keep current)</label>
+                                            <input
+                                                type="password"
+                                                className="input"
+                                                value={editingUser.newPassword || ''}
+                                                onChange={(e) => setEditingUser({...editingUser, newPassword: e.target.value})}
+                                                placeholder="Enter new password or leave blank"
+                                            />
+                                        </div>
+                                        {currentUser.role === 'owner' && (
+                                            <div className="form-group">
+                                                <label className="label">Role</label>
+                                                <select
+                                                    className="select"
+                                                    value={editingUser.role}
+                                                    onChange={(e) => setEditingUser({...editingUser, role: e.target.value})}
+                                                >
+                                                    <option value="employee">Employee</option>
+                                                    <option value="manager">Manager</option>
+                                                </select>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="btn-group">
+                                        <button type="submit" className="btn btn-success">💾 Save Changes</button>
+                                        <button type="button" className="btn btn-secondary" onClick={() => {
+                                            setShowEditUser(false);
+                                            setEditingUser(null);
+                                        }}>❌ Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<TimeTracker />, document.getElementById('root'));
+    </script>
+</body>
+</html>
+

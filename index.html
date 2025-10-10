@@ -239,6 +239,193 @@
         const { useState, useEffect, createContext, useContext } = React;
         const { createRoot } = ReactDOM;
 
+        // Data Backup and Persistence System
+        const DataBackup = {
+            // Save data to multiple storage locations
+            saveData: (key, data) => {
+                try {
+                    // Primary storage: localStorage
+                    localStorage.setItem(key, JSON.stringify(data));
+                    
+                    // Secondary storage: sessionStorage
+                    sessionStorage.setItem(key, JSON.stringify(data));
+                    
+                    // Tertiary storage: IndexedDB (if available)
+                    if ('indexedDB' in window) {
+                        DataBackup.saveToIndexedDB(key, data);
+                    }
+                    
+                    // Cloud backup: Save to remote server (you'll need to implement this)
+                    DataBackup.saveToCloud(key, data);
+                    
+                    console.log(`Data backed up successfully: ${key}`);
+                } catch (error) {
+                    console.error('Error saving data:', error);
+                }
+            },
+            
+            // Load data from multiple storage locations
+            loadData: (key) => {
+                try {
+                    // Try localStorage first
+                    let data = localStorage.getItem(key);
+                    if (data) {
+                        return JSON.parse(data);
+                    }
+                    
+                    // Try sessionStorage
+                    data = sessionStorage.getItem(key);
+                    if (data) {
+                        return JSON.parse(data);
+                    }
+                    
+                    // Try IndexedDB
+                    if ('indexedDB' in window) {
+                        return DataBackup.loadFromIndexedDB(key);
+                    }
+                    
+                    return null;
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    return null;
+                }
+            },
+            
+            // IndexedDB operations
+            saveToIndexedDB: (key, data) => {
+                const request = indexedDB.open('TimeTrackerDB', 1);
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('data')) {
+                        db.createObjectStore('data');
+                    }
+                };
+                request.onsuccess = (event) => {
+                    const db = event.target.result;
+                    const transaction = db.transaction(['data'], 'readwrite');
+                    const store = transaction.objectStore('data');
+                    store.put(data, key);
+                };
+            },
+            
+            loadFromIndexedDB: (key) => {
+                return new Promise((resolve) => {
+                    const request = indexedDB.open('TimeTrackerDB', 1);
+                    request.onsuccess = (event) => {
+                        const db = event.target.result;
+                        const transaction = db.transaction(['data'], 'readonly');
+                        const store = transaction.objectStore('data');
+                        const getRequest = store.get(key);
+                        getRequest.onsuccess = () => {
+                            resolve(getRequest.result);
+                        };
+                        getRequest.onerror = () => {
+                            resolve(null);
+                        };
+                    };
+                    request.onerror = () => {
+                        resolve(null);
+                    };
+                });
+            },
+            
+            // Cloud backup (you'll need to implement your own endpoint)
+            saveToCloud: (key, data) => {
+                // This is a placeholder - you'll need to implement your own cloud storage
+                // Options: Firebase, AWS S3, Google Drive API, Dropbox API, etc.
+                try {
+                    // Example: Save to a simple JSON file on your server
+                    fetch('/api/backup', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            key: key,
+                            data: data,
+                            timestamp: new Date().toISOString(),
+                            userId: 'current-user-id' // You'll need to get this from auth
+                        })
+                    }).catch(error => {
+                        console.log('Cloud backup failed (this is normal if no server is configured):', error);
+                    });
+                } catch (error) {
+                    console.log('Cloud backup not configured:', error);
+                }
+            },
+            
+            // Export all data for manual backup
+            exportAllData: () => {
+                const allData = {
+                    users: DataBackup.loadData('users') || [],
+                    companies: DataBackup.loadData('companies') || [],
+                    timeEntries: DataBackup.loadData('timeEntries') || [],
+                    jobSites: DataBackup.loadData('jobSites') || [],
+                    exportDate: new Date().toISOString(),
+                    version: '1.0'
+                };
+                
+                const dataStr = JSON.stringify(allData, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `timetracker-backup-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                
+                URL.revokeObjectURL(url);
+            },
+            
+            // Import data from backup file
+            importData: (file) => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            
+                            // Validate backup format
+                            if (!data.version || !data.exportDate) {
+                                throw new Error('Invalid backup file format');
+                            }
+                            
+                            // Import each data type
+                            if (data.users) DataBackup.saveData('users', data.users);
+                            if (data.companies) DataBackup.saveData('companies', data.companies);
+                            if (data.timeEntries) DataBackup.saveData('timeEntries', data.timeEntries);
+                            if (data.jobSites) DataBackup.saveData('jobSites', data.jobSites);
+                            
+                            resolve('Data imported successfully!');
+                        } catch (error) {
+                            reject('Error importing data: ' + error.message);
+                        }
+                    };
+                    reader.readAsText(file);
+                });
+            },
+            
+            // Automatic backup every 5 minutes
+            startAutoBackup: () => {
+                setInterval(() => {
+                    const users = DataBackup.loadData('users');
+                    const companies = DataBackup.loadData('companies');
+                    const timeEntries = DataBackup.loadData('timeEntries');
+                    const jobSites = DataBackup.loadData('jobSites');
+                    
+                    if (users || companies || timeEntries || jobSites) {
+                        DataBackup.saveData('autoBackup', {
+                            users: users || [],
+                            companies: companies || [],
+                            timeEntries: timeEntries || [],
+                            jobSites: jobSites || [],
+                            timestamp: new Date().toISOString()
+                        });
+                    }
+                }, 5 * 60 * 1000); // 5 minutes
+            }
+        };
+
         // Auth Context
         const AuthContext = createContext();
 
@@ -255,14 +442,14 @@
 
             const login = (username, password) => {
                 try {
-                    const users = JSON.parse(localStorage.getItem('users') || '[]');
+                    const users = DataBackup.loadData('users') || [];
                     const foundUser = users.find(u => u.username === username && u.password === password);
                     
                     if (foundUser) {
                         const userData = { ...foundUser };
                         delete userData.password;
                         setUser(userData);
-                        localStorage.setItem('currentUser', JSON.stringify(userData));
+                        DataBackup.saveData('currentUser', userData);
                         return true;
                     }
                     return false;
@@ -279,7 +466,7 @@
 
             const register = (userData) => {
                 try {
-                    const users = JSON.parse(localStorage.getItem('users') || '[]');
+                    const users = DataBackup.loadData('users') || [];
                     
                     if (users.find(u => u.username === userData.username)) {
                         alert('Username already exists');
@@ -298,12 +485,12 @@
                     };
 
                     users.push(newUser);
-                    localStorage.setItem('users', JSON.stringify(users));
+                    DataBackup.saveData('users', users);
                     
                     const userDataForState = { ...newUser };
                     delete userDataForState.password;
                     setUser(userDataForState);
-                    localStorage.setItem('currentUser', JSON.stringify(userDataForState));
+                    DataBackup.saveData('currentUser', userDataForState);
                     
                     return true;
                 } catch (error) {
@@ -314,8 +501,8 @@
 
             const createCompany = (companyData, ownerData) => {
                 try {
-                    const companies = JSON.parse(localStorage.getItem('companies') || '[]');
-                    const users = JSON.parse(localStorage.getItem('users') || '[]');
+                    const companies = DataBackup.loadData('companies') || [];
+                    const users = DataBackup.loadData('users') || [];
                     
                     if (companies.find(c => c.name === companyData.name)) {
                         alert('Company name already exists');
@@ -352,13 +539,13 @@
                     companies.push(newCompany);
                     users.push(newOwner);
                     
-                    localStorage.setItem('companies', JSON.stringify(companies));
-                    localStorage.setItem('users', JSON.stringify(users));
+                    DataBackup.saveData('companies', companies);
+                    DataBackup.saveData('users', users);
                     
                     const userDataForState = { ...newOwner };
                     delete userDataForState.password;
                     setUser(userDataForState);
-                    localStorage.setItem('currentUser', JSON.stringify(userDataForState));
+                    DataBackup.saveData('currentUser', userDataForState);
                     
                     return true;
                 } catch (error) {
@@ -1448,24 +1635,69 @@
                             ),
                             
                             React.createElement('div', { style: { marginBottom: '20px' } },
-                                React.createElement('h3', null, 'Company Management'),
+                                React.createElement('h3', null, 'Data Backup & Management'),
                                 React.createElement('div', { style: { display: 'flex', gap: '10px', flexWrap: 'wrap' } },
                                     React.createElement('button', { 
                                         className: 'btn btn-primary',
-                                        onClick: () => alert('Add new employee - Feature coming soon!')
-                                    }, '👤 Add Employee'),
+                                        onClick: () => {
+                                            DataBackup.exportAllData();
+                                            alert('Backup file downloaded! Save this file in a safe location.');
+                                        }
+                                    }, '💾 Export All Data'),
                                     React.createElement('button', { 
                                         className: 'btn btn-secondary',
-                                        onClick: () => alert('Add new manager - Feature coming soon!')
-                                    }, '👔 Add Manager'),
+                                        onClick: () => {
+                                            const input = document.createElement('input');
+                                            input.type = 'file';
+                                            input.accept = '.json';
+                                            input.onchange = async (e) => {
+                                                const file = e.target.files[0];
+                                                if (file) {
+                                                    try {
+                                                        await DataBackup.importData(file);
+                                                        alert('Data imported successfully! Please refresh the page.');
+                                                    } catch (error) {
+                                                        alert(error);
+                                                    }
+                                                }
+                                            };
+                                            input.click();
+                                        }
+                                    }, '📥 Import Data'),
                                     React.createElement('button', { 
                                         className: 'btn btn-outline',
-                                        onClick: () => alert('Create job site - Feature coming soon!')
-                                    }, '🏗️ Create Job Site'),
-                                    React.createElement('button', { 
-                                        className: 'btn btn-outline',
-                                        onClick: () => alert('Generate company report - Feature coming soon!')
-                                    }, '📊 Company Report')
+                                        onClick: () => {
+                                            if (confirm('This will create an automatic backup. Continue?')) {
+                                                const users = DataBackup.loadData('users') || [];
+                                                const companies = DataBackup.loadData('companies') || [];
+                                                const timeEntries = DataBackup.loadData('timeEntries') || [];
+                                                const jobSites = DataBackup.loadData('jobSites') || [];
+                                                
+                                                DataBackup.saveData('manualBackup', {
+                                                    users, companies, timeEntries, jobSites,
+                                                    timestamp: new Date().toISOString(),
+                                                    type: 'manual'
+                                                });
+                                                alert('Manual backup created successfully!');
+                                            }
+                                        }
+                                    }, '🔄 Create Backup')
+                                ),
+                                React.createElement('div', { style: { 
+                                    background: '#f8f9fa', 
+                                    padding: '10px', 
+                                    borderRadius: '6px', 
+                                    marginTop: '10px',
+                                    fontSize: '12px',
+                                    color: '#666'
+                                } },
+                                    React.createElement('p', { style: { margin: '0 0 5px 0' } }, '💡 Backup Tips:'),
+                                    React.createElement('ul', { style: { margin: '0', paddingLeft: '20px' } },
+                                        React.createElement('li', null, 'Export data regularly and store in multiple locations'),
+                                        React.createElement('li', null, 'Data is automatically backed up every 5 minutes'),
+                                        React.createElement('li', null, 'Data is stored in localStorage, sessionStorage, and IndexedDB'),
+                                        React.createElement('li', null, 'For production use, implement cloud backup (see documentation)')
+                                    )
                                 )
                             ),
                             
@@ -1515,6 +1747,10 @@
             );
         };
 
+        // Start automatic backup system
+        DataBackup.startAutoBackup();
+        console.log('Automatic backup system started (every 5 minutes)');
+        
         // Render the app
         const root = createRoot(document.getElementById('root'));
         root.render(React.createElement(AuthProvider, null, React.createElement(App)));
