@@ -997,14 +997,79 @@
             };
 
             if (user) {
-                return React.createElement('div', { style: { padding: '20px', textAlign: 'center' } },
-                    React.createElement('h1', null, `Welcome, ${user.firstName}!`),
-                    React.createElement('p', { style: { marginBottom: '20px' } }, `Role: ${user.role}`),
-                    React.createElement('button', { 
-                        className: 'btn btn-outline',
-                        onClick: handleLogout
-                    }, 'Logout')
-                );
+                // Simple dashboard based on role
+                if (user.role === 'employee') {
+                    return React.createElement('div', { className: 'container' },
+                        React.createElement('div', { className: 'card' },
+                            React.createElement('h1', null, `Welcome, ${user.firstName}!`),
+                            React.createElement('p', { style: { marginBottom: '20px' } }, `Role: ${user.role}`),
+                            
+                            React.createElement('div', { style: { display: 'flex', gap: '10px', marginBottom: '20px' } },
+                                React.createElement('button', { 
+                                    className: 'btn btn-primary',
+                                    onClick: () => alert('Clock In - Feature coming soon!')
+                                }, 'Clock In'),
+                                React.createElement('button', { 
+                                    className: 'btn btn-secondary',
+                                    onClick: () => alert('Clock Out - Feature coming soon!')
+                                }, 'Clock Out')
+                            ),
+                            
+                            React.createElement('div', { style: { marginBottom: '20px' } },
+                                React.createElement('h3', null, 'Today\'s Time Entries'),
+                                React.createElement('p', null, 'No entries yet - Clock in to start tracking!')
+                            ),
+                            
+                            React.createElement('button', { 
+                                className: 'btn btn-outline',
+                                onClick: handleLogout
+                            }, 'Logout')
+                        )
+                    );
+                } else if (user.role === 'manager') {
+                    return React.createElement('div', { className: 'container' },
+                        React.createElement('div', { className: 'card' },
+                            React.createElement('h1', null, `Welcome, ${user.firstName}!`),
+                            React.createElement('p', { style: { marginBottom: '20px' } }, `Role: ${user.role}`),
+                            
+                            React.createElement('div', { style: { marginBottom: '20px' } },
+                                React.createElement('h3', null, 'Team Management'),
+                                React.createElement('p', null, 'Team overview - Feature coming soon!')
+                            ),
+                            
+                            React.createElement('button', { 
+                                className: 'btn btn-outline',
+                                onClick: handleLogout
+                            }, 'Logout')
+                        )
+                    );
+                } else if (user.role === 'owner') {
+                    return React.createElement('div', { className: 'container' },
+                        React.createElement('div', { className: 'card' },
+                            React.createElement('h1', null, `Welcome, ${user.firstName}!`),
+                            React.createElement('p', { style: { marginBottom: '20px' } }, `Role: ${user.role}`),
+                            
+                            React.createElement('div', { style: { marginBottom: '20px' } },
+                                React.createElement('h3', null, 'Company Management'),
+                                React.createElement('p', null, 'Company overview - Feature coming soon!')
+                            ),
+                            
+                            React.createElement('button', { 
+                                className: 'btn btn-outline',
+                                onClick: handleLogout
+                            }, 'Logout')
+                        )
+                    );
+                } else {
+                    return React.createElement('div', { style: { padding: '20px', textAlign: 'center' } },
+                        React.createElement('h1', null, `Welcome, ${user.firstName}!`),
+                        React.createElement('p', { style: { marginBottom: '20px' } }, `Role: ${user.role}`),
+                        React.createElement('button', { 
+                            className: 'btn btn-outline',
+                            onClick: handleLogout
+                        }, 'Logout')
+                    );
+                }
             }
 
             return React.createElement('div', { className: 'container' },
