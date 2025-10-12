@@ -264,6 +264,46 @@
             color: white;
             font-size: 18px;
         }
+
+        .map-container {
+            width: 100%;
+            height: 200px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 10px 0;
+            border: 2px solid #e1e5e9;
+        }
+
+        .location-display {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .address-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .address-form input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .photo-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -434,6 +474,13 @@
                 const [timeEntries, setTimeEntries] = useState(DataManager.load('timeEntries', []));
                 const [clockInTime, setClockInTime] = useState(null);
                 const [capturedPhoto, setCapturedPhoto] = useState(null);
+                const [currentLocation, setCurrentLocation] = useState(null);
+                const [addressDetails, setAddressDetails] = useState({
+                    street: '',
+                    city: '',
+                    state: '',
+                    zip: ''
+                });
 
                 useEffect(() => {
                     const timer = setInterval(() => {
@@ -446,6 +493,25 @@
                 useEffect(() => {
                     DataManager.save('timeEntries', timeEntries);
                 }, [timeEntries]);
+
+                // Get current location on component mount
+                useEffect(() => {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                setCurrentLocation({
+                                    lat: position.coords.latitude,
+                                    lng: position.coords.longitude,
+                                    accuracy: position.coords.accuracy
+                                });
+                            },
+                            (error) => {
+                                console.log('Geolocation error:', error);
+                            },
+                            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+                        );
+                    }
+                }, []);
 
                 const capturePhoto = () => {
                     const input = document.createElement('input');
@@ -477,12 +543,24 @@
                     
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition((position) => {
-                            const location = `${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`;
-                            alert(`Clocked in at ${clockInTime}\nJob Site: ${selectedJobSite}\nLocation: ${location}`);
+                            const location = {
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude,
+                                accuracy: position.coords.accuracy
+                            };
+                            setCurrentLocation(location);
+                            
+                            const locationStr = `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`;
+                            const addressStr = `${addressDetails.street}, ${addressDetails.city}, ${addressDetails.state} ${addressDetails.zip}`.trim();
+                            
+                            alert(`✅ Clocked in at ${clockInTime}\n📍 Job Site: ${selectedJobSite}\n🌍 Location: ${locationStr}\n🏠 Address: ${addressStr || 'Not specified'}`);
                             setIsClockedIn(true);
-                        });
+                        }, (error) => {
+                            alert(`Clocked in at ${clockInTime}\nJob Site: ${selectedJobSite}\n⚠️ Location access denied`);
+                            setIsClockedIn(true);
+                        }, { enableHighAccuracy: true });
                     } else {
-                        alert(`Clocked in at ${clockInTime}\nJob Site: ${selectedJobSite}`);
+                        alert(`Clocked in at ${clockInTime}\nJob Site: ${selectedJobSite}\n⚠️ Location not available`);
                         setIsClockedIn(true);
                     }
                 };
@@ -490,28 +568,61 @@
                 const handleClockOut = () => {
                     const now = new Date();
                     const clockOutTime = now.toLocaleTimeString();
-                    const duration = clockInTime ? 
-                        Math.round((now - new Date(`1970-01-01T${clockInTime}`)) / (1000 * 60)) : 0;
+                    
+                    // Calculate duration properly
+                    let duration = 0;
+                    if (clockInTime) {
+                        const clockInDate = new Date();
+                        const [hours, minutes, seconds] = clockInTime.split(':');
+                        clockInDate.setHours(parseInt(hours), parseInt(minutes), parseInt(seconds), 0);
+                        duration = Math.round((now - clockInDate) / (1000 * 60)); // duration in minutes
+                    }
                     
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition((position) => {
-                            const location = `${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`;
+                            const location = {
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude,
+                                accuracy: position.coords.accuracy
+                            };
+                            const locationStr = `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`;
+                            const addressStr = `${addressDetails.street}, ${addressDetails.city}, ${addressDetails.state} ${addressDetails.zip}`.trim();
+                            
                             const newEntry = {
                                 id: Date.now(),
                                 jobSite: selectedJobSite,
                                 clockIn: clockInTime,
                                 clockOut: clockOutTime,
                                 duration: `${Math.floor(duration / 60)}h ${duration % 60}m`,
-                                location: location,
+                                location: locationStr,
+                                address: addressStr,
+                                photo: capturedPhoto,
+                                date: now.toLocaleDateString(),
+                                coordinates: location
+                            };
+                            setTimeEntries([newEntry, ...timeEntries]);
+                            alert(`✅ Clocked out at ${clockOutTime}\n⏱️ Duration: ${newEntry.duration}\n🌍 Location: ${locationStr}\n🏠 Address: ${addressStr || 'Not specified'}`);
+                            setIsClockedIn(false);
+                            setClockInTime(null);
+                            setCapturedPhoto(null);
+                        }, (error) => {
+                            const newEntry = {
+                                id: Date.now(),
+                                jobSite: selectedJobSite,
+                                clockIn: clockInTime,
+                                clockOut: clockOutTime,
+                                duration: `${Math.floor(duration / 60)}h ${duration % 60}m`,
+                                location: 'Location access denied',
+                                address: `${addressDetails.street}, ${addressDetails.city}, ${addressDetails.state} ${addressDetails.zip}`.trim(),
                                 photo: capturedPhoto,
                                 date: now.toLocaleDateString()
                             };
                             setTimeEntries([newEntry, ...timeEntries]);
-                            alert(`Clocked out at ${clockOutTime}\nDuration: ${newEntry.duration}\nLocation: ${location}`);
+                            alert(`Clocked out at ${clockOutTime}\nDuration: ${newEntry.duration}\n⚠️ Location access denied`);
                             setIsClockedIn(false);
                             setClockInTime(null);
                             setCapturedPhoto(null);
-                        });
+                        }, { enableHighAccuracy: true });
                     } else {
                         const newEntry = {
                             id: Date.now(),
@@ -520,11 +631,12 @@
                             clockOut: clockOutTime,
                             duration: `${Math.floor(duration / 60)}h ${duration % 60}m`,
                             location: 'Location not available',
+                            address: `${addressDetails.street}, ${addressDetails.city}, ${addressDetails.state} ${addressDetails.zip}`.trim(),
                             photo: capturedPhoto,
                             date: now.toLocaleDateString()
                         };
                         setTimeEntries([newEntry, ...timeEntries]);
-                        alert(`Clocked out at ${clockOutTime}\nDuration: ${newEntry.duration}`);
+                        alert(`Clocked out at ${clockOutTime}\nDuration: ${newEntry.duration}\n⚠️ Location not available`);
                         setIsClockedIn(false);
                         setClockInTime(null);
                         setCapturedPhoto(null);
@@ -566,6 +678,61 @@
                                 </select>
                             </div>
 
+                            {/* Current Location Display */}
+                            {currentLocation && (
+                                <div style={{ marginBottom: '20px' }}>
+                                    <h3>📍 Current Location</h3>
+                                    <div className="location-display">
+                                        <strong>GPS:</strong> {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}<br/>
+                                        <strong>Accuracy:</strong> ±{Math.round(currentLocation.accuracy)}m
+                                    </div>
+                                    
+                                    {/* Map Display */}
+                                    <div className="map-container">
+                                        <iframe
+                                            src={`https://www.google.com/maps/embed/v1/view?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dOWWgUfOq8e7hY&center=${currentLocation.lat},${currentLocation.lng}&zoom=15`}
+                                            width="100%"
+                                            height="100%"
+                                            style={{ border: 0 }}
+                                            allowFullScreen=""
+                                            loading="lazy"
+                                            referrerPolicy="no-referrer-when-downgrade"
+                                        ></iframe>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Address Details */}
+                            <div style={{ marginBottom: '20px' }}>
+                                <h3>🏠 Address Details</h3>
+                                <div className="address-form">
+                                    <input
+                                        type="text"
+                                        placeholder="Street Address"
+                                        value={addressDetails.street}
+                                        onChange={(e) => setAddressDetails({...addressDetails, street: e.target.value})}
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="City"
+                                        value={addressDetails.city}
+                                        onChange={(e) => setAddressDetails({...addressDetails, city: e.target.value})}
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="State"
+                                        value={addressDetails.state}
+                                        onChange={(e) => setAddressDetails({...addressDetails, state: e.target.value})}
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="ZIP Code"
+                                        value={addressDetails.zip}
+                                        onChange={(e) => setAddressDetails({...addressDetails, zip: e.target.value})}
+                                    />
+                                </div>
+                            </div>
+
                             <div style={{ marginBottom: '20px' }}>
                                 <h3>Time Tracking</h3>
                                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px', flexWrap: 'wrap' }}>
@@ -595,8 +762,8 @@
                                 </div>
                                 {capturedPhoto && (
                                     <div style={{ marginTop: '15px', textAlign: 'center' }}>
-                                        <img src={capturedPhoto} alt="Captured" style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '8px', border: '2px solid #667eea' }} />
-                                        <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>Photo captured!</p>
+                                        <img src={capturedPhoto} alt="Captured" className="photo-preview" />
+                                        <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>📸 Photo captured!</p>
                                     </div>
                                 )}
                             </div>
@@ -613,6 +780,16 @@
                                                     <div className="activity-action">{entry.jobSite}</div>
                                                     <div className="activity-user">{entry.clockIn} - {entry.clockOut}</div>
                                                     <div style={{ fontSize: '11px', color: '#999' }}>Duration: {entry.duration}</div>
+                                                    {entry.address && (
+                                                        <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
+                                                            📍 {entry.address}
+                                                        </div>
+                                                    )}
+                                                    {entry.location && (
+                                                        <div style={{ fontSize: '10px', color: '#999', marginTop: '2px' }}>
+                                                            🌍 {entry.location}
+                                                        </div>
+                                                    )}
                                                     {entry.photo && (
                                                         <div style={{ marginTop: '5px' }}>
                                                             <img src={entry.photo} alt="Entry photo" style={{ width: '50px', height: '40px', borderRadius: '4px', objectFit: 'cover' }} />
