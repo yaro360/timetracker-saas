@@ -1075,6 +1075,16 @@
                     { id: 1, title: 'Weekly Team Report', date: '2024-01-15', status: 'completed' },
                     { id: 2, title: 'Monthly Hours Summary', date: '2024-01-01', status: 'pending' }
                 ]));
+                const [shifts, setShifts] = useState(DataManager.load('shifts', [
+                    { id: 1, employeeId: 'EMP0001', employeeName: 'John Smith', jobSite: 'Construction Site A', startTime: '08:00', endTime: '17:00', date: '2024-01-20', status: 'scheduled' },
+                    { id: 2, employeeId: 'EMP0002', employeeName: 'Sarah Johnson', jobSite: 'Office Building B', startTime: '09:00', endTime: '18:00', date: '2024-01-20', status: 'scheduled' }
+                ]));
+                const [showAddShift, setShowAddShift] = useState(false);
+                const [tasks, setTasks] = useState(DataManager.load('tasks', [
+                    { id: 1, title: 'Foundation Work', description: 'Complete foundation pouring', assignee: 'John Smith', jobSite: 'Construction Site A', priority: 'high', status: 'in-progress', dueDate: '2024-01-25', createdAt: '2024-01-20' },
+                    { id: 2, title: 'Electrical Installation', description: 'Install electrical systems', assignee: 'Sarah Johnson', jobSite: 'Office Building B', priority: 'medium', status: 'pending', dueDate: '2024-01-30', createdAt: '2024-01-20' }
+                ]));
+                const [showAddTask, setShowAddTask] = useState(false);
 
                 // Save data whenever it changes
                 useEffect(() => {
@@ -1084,6 +1094,49 @@
                 useEffect(() => {
                     DataManager.save('reports', reports);
                 }, [reports]);
+
+                useEffect(() => {
+                    DataManager.save('shifts', shifts);
+                }, [shifts]);
+
+                useEffect(() => {
+                    DataManager.save('tasks', tasks);
+                }, [tasks]);
+
+                const handleAddTask = (taskData) => {
+                    const newTask = {
+                        id: Date.now(),
+                        ...taskData,
+                        createdAt: new Date().toISOString()
+                    };
+                    setTasks([...tasks, newTask]);
+                    setShowAddTask(false);
+                    alert('Task created successfully!');
+                };
+
+                const handleTaskStatusChange = (taskId, newStatus) => {
+                    setTasks(tasks.map(task => 
+                        task.id === taskId ? { ...task, status: newStatus } : task
+                    ));
+                };
+
+                const handleAddShift = (shiftData) => {
+                    const newShift = {
+                        id: Date.now(),
+                        ...shiftData,
+                        status: 'scheduled',
+                        createdAt: new Date().toISOString()
+                    };
+                    setShifts([...shifts, newShift]);
+                    setShowAddShift(false);
+                    alert('Shift scheduled successfully!');
+                };
+
+                const handleShiftStatusChange = (shiftId, newStatus) => {
+                    setShifts(shifts.map(shift => 
+                        shift.id === shiftId ? { ...shift, status: newStatus } : shift
+                    ));
+                };
 
                 const handleAddMember = (memberData) => {
                     const newMember = {
@@ -1334,6 +1387,228 @@
                                 </div>
                             </div>
 
+                            {/* Scheduling & Shift Management */}
+                            <div style={{ marginBottom: '20px' }}>
+                                <h3>📅 Shift Management</h3>
+                                
+                                {/* Quick Stats */}
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginBottom: '20px' }}>
+                                    <div className="stat-card" style={{ backgroundColor: '#e3f2fd' }}>
+                                        <div className="stat-number" style={{ color: '#1976d2' }}>
+                                            {shifts.filter(s => s.status === 'scheduled').length}
+                                        </div>
+                                        <div className="stat-label">Scheduled</div>
+                                    </div>
+                                    <div className="stat-card" style={{ backgroundColor: '#e8f5e8' }}>
+                                        <div className="stat-number" style={{ color: '#388e3c' }}>
+                                            {shifts.filter(s => s.status === 'in-progress').length}
+                                        </div>
+                                        <div className="stat-label">In Progress</div>
+                                    </div>
+                                    <div className="stat-card" style={{ backgroundColor: '#fff3e0' }}>
+                                        <div className="stat-number" style={{ color: '#f57c00' }}>
+                                            {shifts.filter(s => s.status === 'completed').length}
+                                        </div>
+                                        <div className="stat-label">Completed</div>
+                                    </div>
+                                    <div className="stat-card" style={{ backgroundColor: '#f3e5f5' }}>
+                                        <div className="stat-number" style={{ color: '#7b1fa2' }}>
+                                            {shifts.length}
+                                        </div>
+                                        <div className="stat-label">Total Shifts</div>
+                                    </div>
+                                </div>
+
+                                {/* Add Shift Button */}
+                                <div style={{ marginBottom: '20px' }}>
+                                    <button 
+                                        className="btn btn-primary"
+                                        onClick={() => setShowAddShift(true)}
+                                    >
+                                        ➕ Schedule New Shift
+                                    </button>
+                                </div>
+
+                                {/* Shifts List */}
+                                <div style={{ marginBottom: '20px' }}>
+                                    <h4>📋 Upcoming Shifts</h4>
+                                    {shifts.filter(shift => new Date(shift.date) >= new Date()).map(shift => (
+                                        <div key={shift.id} className="activity-item">
+                                            <div>
+                                                <div className="activity-action">
+                                                    {shift.employeeName} - {shift.jobSite}
+                                                </div>
+                                                <div className="activity-user">
+                                                    📅 {shift.date} | ⏰ {shift.startTime} - {shift.endTime}
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <select 
+                                                    value={shift.status}
+                                                    onChange={(e) => handleShiftStatusChange(shift.id, e.target.value)}
+                                                    style={{ 
+                                                        padding: '4px 8px', 
+                                                        fontSize: '12px',
+                                                        border: '1px solid #ddd',
+                                                        borderRadius: '4px'
+                                                    }}
+                                                >
+                                                    <option value="scheduled">Scheduled</option>
+                                                    <option value="in-progress">In Progress</option>
+                                                    <option value="completed">Completed</option>
+                                                    <option value="cancelled">Cancelled</option>
+                                                </select>
+                                                <span className="activity-time">{shift.status}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Shift History */}
+                                <div style={{ marginBottom: '20px' }}>
+                                    <h4>📊 Shift History</h4>
+                                    {shifts.filter(shift => new Date(shift.date) < new Date()).slice(0, 5).map(shift => (
+                                        <div key={shift.id} className="activity-item">
+                                            <div>
+                                                <div className="activity-action">
+                                                    {shift.employeeName} - {shift.jobSite}
+                                                </div>
+                                                <div className="activity-user">
+                                                    📅 {shift.date} | ⏰ {shift.startTime} - {shift.endTime}
+                                                </div>
+                                            </div>
+                                            <span className="activity-time" style={{ 
+                                                color: shift.status === 'completed' ? '#28a745' : 
+                                                       shift.status === 'cancelled' ? '#dc3545' : '#ffc107'
+                                            }}>
+                                                {shift.status}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Task Management */}
+                            <div style={{ marginBottom: '20px' }}>
+                                <h3>📋 Task Management</h3>
+                                
+                                {/* Task Stats */}
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginBottom: '20px' }}>
+                                    <div className="stat-card" style={{ backgroundColor: '#e3f2fd' }}>
+                                        <div className="stat-number" style={{ color: '#1976d2' }}>
+                                            {tasks.filter(t => t.status === 'pending').length}
+                                        </div>
+                                        <div className="stat-label">Pending</div>
+                                    </div>
+                                    <div className="stat-card" style={{ backgroundColor: '#fff3e0' }}>
+                                        <div className="stat-number" style={{ color: '#f57c00' }}>
+                                            {tasks.filter(t => t.status === 'in-progress').length}
+                                        </div>
+                                        <div className="stat-label">In Progress</div>
+                                    </div>
+                                    <div className="stat-card" style={{ backgroundColor: '#e8f5e8' }}>
+                                        <div className="stat-number" style={{ color: '#28a745' }}>
+                                            {tasks.filter(t => t.status === 'completed').length}
+                                        </div>
+                                        <div className="stat-label">Completed</div>
+                                    </div>
+                                    <div className="stat-card" style={{ backgroundColor: '#f3e5f5' }}>
+                                        <div className="stat-number" style={{ color: '#7b1fa2' }}>
+                                            {tasks.filter(t => t.priority === 'high').length}
+                                        </div>
+                                        <div className="stat-label">High Priority</div>
+                                    </div>
+                                </div>
+
+                                {/* Add Task Button */}
+                                <div style={{ marginBottom: '20px' }}>
+                                    <button 
+                                        className="btn btn-primary"
+                                        onClick={() => setShowAddTask(true)}
+                                    >
+                                        ➕ Create New Task
+                                    </button>
+                                </div>
+
+                                {/* Tasks List */}
+                                <div style={{ marginBottom: '20px' }}>
+                                    <h4>📝 Active Tasks</h4>
+                                    {tasks.filter(task => task.status !== 'completed').map(task => (
+                                        <div key={task.id} className="activity-item">
+                                            <div>
+                                                <div className="activity-action">
+                                                    {task.title}
+                                                    <span style={{ 
+                                                        marginLeft: '10px', 
+                                                        padding: '2px 6px', 
+                                                        borderRadius: '3px', 
+                                                        fontSize: '10px',
+                                                        backgroundColor: task.priority === 'high' ? '#dc3545' : task.priority === 'medium' ? '#ffc107' : '#28a745',
+                                                        color: 'white'
+                                                    }}>
+                                                        {task.priority}
+                                                    </span>
+                                                </div>
+                                                <div className="activity-user">
+                                                    👤 {task.assignee} | 📍 {task.jobSite} | 📅 Due: {task.dueDate}
+                                                </div>
+                                                <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+                                                    {task.description}
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <select 
+                                                    value={task.status}
+                                                    onChange={(e) => handleTaskStatusChange(task.id, e.target.value)}
+                                                    style={{ 
+                                                        padding: '4px 8px', 
+                                                        fontSize: '12px',
+                                                        border: '1px solid #ddd',
+                                                        borderRadius: '4px'
+                                                    }}
+                                                >
+                                                    <option value="pending">Pending</option>
+                                                    <option value="in-progress">In Progress</option>
+                                                    <option value="completed">Completed</option>
+                                                    <option value="cancelled">Cancelled</option>
+                                                </select>
+                                                <span className="activity-time">{task.status}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Completed Tasks */}
+                                <div style={{ marginBottom: '20px' }}>
+                                    <h4>✅ Completed Tasks</h4>
+                                    {tasks.filter(task => task.status === 'completed').slice(0, 5).map(task => (
+                                        <div key={task.id} className="activity-item">
+                                            <div>
+                                                <div className="activity-action">
+                                                    {task.title}
+                                                    <span style={{ 
+                                                        marginLeft: '10px', 
+                                                        padding: '2px 6px', 
+                                                        borderRadius: '3px', 
+                                                        fontSize: '10px',
+                                                        backgroundColor: '#28a745',
+                                                        color: 'white'
+                                                    }}>
+                                                        completed
+                                                    </span>
+                                                </div>
+                                                <div className="activity-user">
+                                                    👤 {task.assignee} | 📍 {task.jobSite} | 📅 Due: {task.dueDate}
+                                                </div>
+                                            </div>
+                                            <span className="activity-time" style={{ color: '#28a745' }}>
+                                                completed
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
                             <button className="btn btn-outline" onClick={logout}>
                                 Logout
                             </button>
@@ -1379,6 +1654,163 @@
                                 </div>
                             </div>
                         )}
+
+                        {/* Add Shift Modal */}
+                        {showAddShift && (
+                            <div style={{
+                                position: 'fixed',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                backgroundColor: 'rgba(0,0,0,0.5)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: 1000
+                            }}>
+                                <div className="card" style={{ maxWidth: '500px', margin: '20px' }}>
+                                    <h3>Schedule New Shift</h3>
+                                    <form onSubmit={(e) => {
+                                        e.preventDefault();
+                                        const formData = new FormData(e.target);
+                                        handleAddShift({
+                                            employeeId: formData.get('employeeId'),
+                                            employeeName: formData.get('employeeName'),
+                                            jobSite: formData.get('jobSite'),
+                                            startTime: formData.get('startTime'),
+                                            endTime: formData.get('endTime'),
+                                            date: formData.get('date'),
+                                            notes: formData.get('notes')
+                                        });
+                                    }}>
+                                        <div className="form-group">
+                                            <label>Employee</label>
+                                            <select name="employeeId" required onChange={(e) => {
+                                                const selectedEmployee = teamMembers.find(m => m.id.toString() === e.target.value);
+                                                if (selectedEmployee) {
+                                                    e.target.form.querySelector('[name="employeeName"]').value = selectedEmployee.name;
+                                                }
+                                            }}>
+                                                <option value="">Select Employee</option>
+                                                {teamMembers.map(member => (
+                                                    <option key={member.id} value={member.id}>{member.name}</option>
+                                                ))}
+                                            </select>
+                                            <input type="hidden" name="employeeName" />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Job Site</label>
+                                            <select name="jobSite" required>
+                                                <option value="">Select Job Site</option>
+                                                <option value="Construction Site A">Construction Site A</option>
+                                                <option value="Office Building B">Office Building B</option>
+                                                <option value="Warehouse C">Warehouse C</option>
+                                            </select>
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Date</label>
+                                            <input type="date" name="date" required />
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <div className="form-group" style={{ flex: 1 }}>
+                                                <label>Start Time</label>
+                                                <input type="time" name="startTime" required />
+                                            </div>
+                                            <div className="form-group" style={{ flex: 1 }}>
+                                                <label>End Time</label>
+                                                <input type="time" name="endTime" required />
+                                            </div>
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Notes (Optional)</label>
+                                            <textarea name="notes" rows="3" placeholder="Special instructions or notes..."></textarea>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <button type="submit" className="btn btn-primary">Schedule Shift</button>
+                                            <button type="button" className="btn btn-outline" onClick={() => setShowAddShift(false)}>Cancel</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Add Task Modal */}
+                        {showAddTask && (
+                            <div style={{
+                                position: 'fixed',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                backgroundColor: 'rgba(0,0,0,0.5)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: 1000
+                            }}>
+                                <div className="card" style={{ maxWidth: '500px', margin: '20px' }}>
+                                    <h3>Create New Task</h3>
+                                    <form onSubmit={(e) => {
+                                        e.preventDefault();
+                                        const formData = new FormData(e.target);
+                                        handleAddTask({
+                                            title: formData.get('title'),
+                                            description: formData.get('description'),
+                                            assignee: formData.get('assignee'),
+                                            jobSite: formData.get('jobSite'),
+                                            priority: formData.get('priority'),
+                                            dueDate: formData.get('dueDate')
+                                        });
+                                    }}>
+                                        <div className="form-group">
+                                            <label>Task Title</label>
+                                            <input type="text" name="title" placeholder="e.g., Foundation Work" required />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Description</label>
+                                            <textarea name="description" rows="3" placeholder="Detailed task description..." required></textarea>
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Assign To</label>
+                                            <select name="assignee" required>
+                                                <option value="">Select Employee</option>
+                                                {teamMembers.map(member => (
+                                                    <option key={member.id} value={member.name}>{member.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Job Site</label>
+                                            <select name="jobSite" required>
+                                                <option value="">Select Job Site</option>
+                                                <option value="Construction Site A">Construction Site A</option>
+                                                <option value="Office Building B">Office Building B</option>
+                                                <option value="Warehouse C">Warehouse C</option>
+                                            </select>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <div className="form-group" style={{ flex: 1 }}>
+                                                <label>Priority</label>
+                                                <select name="priority" required>
+                                                    <option value="low">Low</option>
+                                                    <option value="medium">Medium</option>
+                                                    <option value="high">High</option>
+                                                </select>
+                                            </div>
+                                            <div className="form-group" style={{ flex: 1 }}>
+                                                <label>Due Date</label>
+                                                <input type="date" name="dueDate" required />
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <button type="submit" className="btn btn-primary">Create Task</button>
+                                            <button type="button" className="btn btn-outline" onClick={() => setShowAddTask(false)}>Cancel</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             };
@@ -1402,6 +1834,16 @@
                     { id: 2, name: 'Office Building B', address: '456 Oak Ave', latitude: 40.7589, longitude: -73.9851, radius: 100, status: 'active' },
                     { id: 3, name: 'Warehouse C', address: '789 Pine Rd', latitude: 40.7505, longitude: -73.9934, radius: 100, status: 'active' }
                 ]));
+                const [payrollSettings, setPayrollSettings] = useState(DataManager.load('payrollSettings', {
+                    quickbooksEnabled: false,
+                    adpEnabled: false,
+                    quickbooksCompanyId: '',
+                    adpCompanyId: '',
+                    defaultHourlyRate: 25.00,
+                    overtimeThreshold: 40,
+                    overtimeMultiplier: 1.5
+                }));
+                const [payrollReports, setPayrollReports] = useState(DataManager.load('payrollReports', []));
 
                 // Save data whenever it changes
                 useEffect(() => {
@@ -1417,27 +1859,37 @@
                 }, [jobSites]);
 
                 const handleAddEmployee = (employeeData) => {
+                    // Generate unique employee ID
+                    const employeeId = `EMP${String(employees.length + 1).padStart(4, '0')}`;
+                    
                     const newEmployee = {
                         id: Date.now(),
+                        employeeId: employeeId,
                         ...employeeData,
                         role: 'employee',
-                        status: 'active'
+                        status: 'active',
+                        createdAt: new Date().toISOString()
                     };
                     setEmployees([...employees, newEmployee]);
                     setShowAddEmployee(false);
-                    alert('Employee added successfully!');
+                    alert(`Employee added successfully!\nEmployee ID: ${employeeId}`);
                 };
 
                 const handleAddManager = (managerData) => {
+                    // Generate unique manager ID
+                    const managerId = `MGR${String(managers.length + 1).padStart(4, '0')}`;
+                    
                     const newManager = {
                         id: Date.now(),
+                        managerId: managerId,
                         ...managerData,
                         role: 'manager',
-                        status: 'active'
+                        status: 'active',
+                        createdAt: new Date().toISOString()
                     };
                     setManagers([...managers, newManager]);
                     setShowAddManager(false);
-                    alert('Manager added successfully!');
+                    alert(`Manager added successfully!\nManager ID: ${managerId}`);
                 };
 
                 const handleAddJobSite = (jobSiteData) => {
@@ -1531,8 +1983,28 @@
                                 {employees.map(emp => (
                                     <div key={emp.id} className="team-member">
                                         <div className="member-info">
-                                            <div className="member-name">{emp.name}</div>
-                                            <div className="member-role">{emp.email}</div>
+                                            <div className="member-name">
+                                                {emp.firstName} {emp.lastName}
+                                                {emp.employeeId && (
+                                                    <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                                                        ({emp.employeeId})
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="member-role">{emp.position || 'Employee'}</div>
+                                            <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                                                📧 {emp.email} | 📞 {emp.phone || 'N/A'}
+                                            </div>
+                                            {emp.department && (
+                                                <div style={{ fontSize: '12px', color: '#666' }}>
+                                                    🏢 {emp.department}
+                                                </div>
+                                            )}
+                                            {emp.hourlyRate > 0 && (
+                                                <div style={{ fontSize: '12px', color: '#28a745', fontWeight: 'bold' }}>
+                                                    💰 ${emp.hourlyRate}/hr
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="member-status">
                                             <div className="status-text" style={{ color: '#28a745' }}>Active</div>
@@ -1547,8 +2019,28 @@
                                 {managers.map(mgr => (
                                     <div key={mgr.id} className="team-member">
                                         <div className="member-info">
-                                            <div className="member-name">{mgr.name}</div>
-                                            <div className="member-role">{mgr.email}</div>
+                                            <div className="member-name">
+                                                {mgr.firstName} {mgr.lastName}
+                                                {mgr.managerId && (
+                                                    <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                                                        ({mgr.managerId})
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="member-role">{mgr.position || 'Manager'}</div>
+                                            <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                                                📧 {mgr.email} | 📞 {mgr.phone || 'N/A'}
+                                            </div>
+                                            {mgr.department && (
+                                                <div style={{ fontSize: '12px', color: '#666' }}>
+                                                    🏢 {mgr.department}
+                                                </div>
+                                            )}
+                                            {mgr.hourlyRate > 0 && (
+                                                <div style={{ fontSize: '12px', color: '#28a745', fontWeight: 'bold' }}>
+                                                    💰 ${mgr.hourlyRate}/hr
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="member-status">
                                             <div className="status-text" style={{ color: '#28a745' }}>Active</div>
@@ -1564,7 +2056,9 @@
                                     <div key={site.id} className="team-member">
                                         <div className="member-info">
                                             <div className="member-name">{site.name}</div>
-                                            <div className="member-role">{site.address}</div>
+                                            <div className="member-role">
+                                                {site.address}, {site.city}, {site.state} {site.zipCode}
+                                            </div>
                                             {site.latitude && site.longitude && (
                                                 <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
                                                     📍 GPS: {site.latitude.toFixed(4)}, {site.longitude.toFixed(4)} | Radius: {site.radius || 100}m
@@ -1576,6 +2070,160 @@
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+
+                            {/* Payroll Integration */}
+                            <div style={{ marginBottom: '20px' }}>
+                                <h3>💰 Payroll Integration</h3>
+                                
+                                {/* Integration Status */}
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '20px' }}>
+                                    <div className="stat-card" style={{ backgroundColor: payrollSettings.quickbooksEnabled ? '#e8f5e8' : '#f8d7da' }}>
+                                        <div className="stat-number" style={{ color: payrollSettings.quickbooksEnabled ? '#28a745' : '#dc3545' }}>
+                                            {payrollSettings.quickbooksEnabled ? '✅' : '❌'}
+                                        </div>
+                                        <div className="stat-label">QuickBooks</div>
+                                    </div>
+                                    <div className="stat-card" style={{ backgroundColor: payrollSettings.adpEnabled ? '#e8f5e8' : '#f8d7da' }}>
+                                        <div className="stat-number" style={{ color: payrollSettings.adpEnabled ? '#28a745' : '#dc3545' }}>
+                                            {payrollSettings.adpEnabled ? '✅' : '❌'}
+                                        </div>
+                                        <div className="stat-label">ADP</div>
+                                    </div>
+                                    <div className="stat-card" style={{ backgroundColor: '#e3f2fd' }}>
+                                        <div className="stat-number" style={{ color: '#1976d2' }}>
+                                            ${payrollSettings.defaultHourlyRate}
+                                        </div>
+                                        <div className="stat-label">Default Rate/hr</div>
+                                    </div>
+                                    <div className="stat-card" style={{ backgroundColor: '#fff3e0' }}>
+                                        <div className="stat-number" style={{ color: '#f57c00' }}>
+                                            {payrollSettings.overtimeThreshold}h
+                                        </div>
+                                        <div className="stat-label">Overtime Threshold</div>
+                                    </div>
+                                </div>
+
+                                {/* Payroll Settings */}
+                                <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', border: '1px solid #dee2e6', marginBottom: '20px' }}>
+                                    <h4 style={{ marginTop: 0, color: '#495057' }}>⚙️ Payroll Settings</h4>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px' }}>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>QuickBooks Integration</label>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={payrollSettings.quickbooksEnabled}
+                                                    onChange={(e) => setPayrollSettings({...payrollSettings, quickbooksEnabled: e.target.checked})}
+                                                />
+                                                <span>Enable QuickBooks Sync</span>
+                                            </div>
+                                            {payrollSettings.quickbooksEnabled && (
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="QuickBooks Company ID"
+                                                    value={payrollSettings.quickbooksCompanyId}
+                                                    onChange={(e) => setPayrollSettings({...payrollSettings, quickbooksCompanyId: e.target.value})}
+                                                    style={{ marginTop: '10px', width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+                                                />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>ADP Integration</label>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={payrollSettings.adpEnabled}
+                                                    onChange={(e) => setPayrollSettings({...payrollSettings, adpEnabled: e.target.checked})}
+                                                />
+                                                <span>Enable ADP Sync</span>
+                                            </div>
+                                            {payrollSettings.adpEnabled && (
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="ADP Company ID"
+                                                    value={payrollSettings.adpCompanyId}
+                                                    onChange={(e) => setPayrollSettings({...payrollSettings, adpCompanyId: e.target.value})}
+                                                    style={{ marginTop: '10px', width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+                                                />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Default Hourly Rate</label>
+                                            <input 
+                                                type="number" 
+                                                step="0.01"
+                                                value={payrollSettings.defaultHourlyRate}
+                                                onChange={(e) => setPayrollSettings({...payrollSettings, defaultHourlyRate: parseFloat(e.target.value)})}
+                                                style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Overtime Threshold (hours)</label>
+                                            <input 
+                                                type="number" 
+                                                value={payrollSettings.overtimeThreshold}
+                                                onChange={(e) => setPayrollSettings({...payrollSettings, overtimeThreshold: parseInt(e.target.value)})}
+                                                style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Payroll Actions */}
+                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                    <button 
+                                        className="btn btn-primary"
+                                        onClick={() => {
+                                            const payrollData = employees.map(emp => ({
+                                                employeeId: emp.employeeId || `EMP${emp.id}`,
+                                                name: `${emp.firstName} ${emp.lastName}`,
+                                                hours: Math.random() * 40 + 20, // Mock data
+                                                hourlyRate: emp.hourlyRate || payrollSettings.defaultHourlyRate,
+                                                grossPay: (emp.hourlyRate || payrollSettings.defaultHourlyRate) * (Math.random() * 40 + 20),
+                                                overtime: Math.max(0, (Math.random() * 40 + 20) - payrollSettings.overtimeThreshold)
+                                            }));
+                                            
+                                            const csv = 'Employee ID,Name,Hours,Hourly Rate,Gross Pay,Overtime Hours\n' + 
+                                                      payrollData.map(emp => `${emp.employeeId},${emp.name},${emp.hours.toFixed(2)},${emp.hourlyRate},${emp.grossPay.toFixed(2)},${emp.overtime.toFixed(2)}`).join('\n');
+                                            
+                                            const blob = new Blob([csv], { type: 'text/csv' });
+                                            const url = URL.createObjectURL(blob);
+                                            const a = document.createElement('a');
+                                            a.href = url;
+                                            a.download = `payroll-${new Date().toISOString().split('T')[0]}.csv`;
+                                            a.click();
+                                            
+                                            alert('📊 Payroll report generated and downloaded!');
+                                        }}
+                                    >
+                                        📊 Generate Payroll Report
+                                    </button>
+                                    <button 
+                                        className="btn btn-outline"
+                                        onClick={() => {
+                                            if (payrollSettings.quickbooksEnabled) {
+                                                alert('🔄 Syncing with QuickBooks...\n\nThis would normally:\n• Upload time entries\n• Update employee hours\n• Generate invoices\n• Sync payroll data');
+                                            } else {
+                                                alert('❌ QuickBooks integration is not enabled.\n\nPlease enable it in the settings above.');
+                                            }
+                                        }}
+                                    >
+                                        🔄 Sync QuickBooks
+                                    </button>
+                                    <button 
+                                        className="btn btn-outline"
+                                        onClick={() => {
+                                            if (payrollSettings.adpEnabled) {
+                                                alert('🔄 Syncing with ADP...\n\nThis would normally:\n• Upload time entries\n• Update employee records\n• Generate payroll reports\n• Sync with ADP system');
+                                            } else {
+                                                alert('❌ ADP integration is not enabled.\n\nPlease enable it in the settings above.');
+                                            }
+                                        }}
+                                    >
+                                        🔄 Sync ADP
+                                    </button>
+                                </div>
                             </div>
 
                             <button className="btn btn-outline" onClick={logout}>
@@ -1603,17 +2251,49 @@
                                         e.preventDefault();
                                         const formData = new FormData(e.target);
                                         handleAddEmployee({
-                                            name: formData.get('name'),
-                                            email: formData.get('email')
+                                            firstName: formData.get('firstName'),
+                                            lastName: formData.get('lastName'),
+                                            email: formData.get('email'),
+                                            phone: formData.get('phone'),
+                                            department: formData.get('department'),
+                                            position: formData.get('position'),
+                                            hourlyRate: parseFloat(formData.get('hourlyRate')) || 0
                                         });
                                     }}>
                                         <div className="form-group">
-                                            <label>Full Name</label>
-                                            <input type="text" name="name" required />
+                                            <label>First Name</label>
+                                            <input type="text" name="firstName" required />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Last Name</label>
+                                            <input type="text" name="lastName" required />
                                         </div>
                                         <div className="form-group">
                                             <label>Email</label>
                                             <input type="email" name="email" required />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Phone Number</label>
+                                            <input type="tel" name="phone" placeholder="(555) 123-4567" required />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Department</label>
+                                            <select name="department" required>
+                                                <option value="">Select Department</option>
+                                                <option value="Construction">Construction</option>
+                                                <option value="Maintenance">Maintenance</option>
+                                                <option value="Administration">Administration</option>
+                                                <option value="Management">Management</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Position</label>
+                                            <input type="text" name="position" placeholder="e.g., Foreman, Laborer, Operator" required />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Hourly Rate ($)</label>
+                                            <input type="number" name="hourlyRate" step="0.01" min="0" placeholder="25.00" />
                                         </div>
                                         <div style={{ display: 'flex', gap: '10px' }}>
                                             <button type="submit" className="btn btn-primary">Add Employee</button>
@@ -1644,17 +2324,49 @@
                                         e.preventDefault();
                                         const formData = new FormData(e.target);
                                         handleAddManager({
-                                            name: formData.get('name'),
-                                            email: formData.get('email')
+                                            firstName: formData.get('firstName'),
+                                            lastName: formData.get('lastName'),
+                                            email: formData.get('email'),
+                                            phone: formData.get('phone'),
+                                            department: formData.get('department'),
+                                            position: formData.get('position'),
+                                            hourlyRate: parseFloat(formData.get('hourlyRate')) || 0
                                         });
                                     }}>
                                         <div className="form-group">
-                                            <label>Full Name</label>
-                                            <input type="text" name="name" required />
+                                            <label>First Name</label>
+                                            <input type="text" name="firstName" required />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Last Name</label>
+                                            <input type="text" name="lastName" required />
                                         </div>
                                         <div className="form-group">
                                             <label>Email</label>
                                             <input type="email" name="email" required />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Phone Number</label>
+                                            <input type="tel" name="phone" placeholder="(555) 123-4567" required />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Department</label>
+                                            <select name="department" required>
+                                                <option value="">Select Department</option>
+                                                <option value="Construction">Construction</option>
+                                                <option value="Maintenance">Maintenance</option>
+                                                <option value="Administration">Administration</option>
+                                                <option value="Management">Management</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Position</label>
+                                            <input type="text" name="position" placeholder="e.g., Project Manager, Site Supervisor" required />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Hourly Rate ($)</label>
+                                            <input type="number" name="hourlyRate" step="0.01" min="0" placeholder="35.00" />
                                         </div>
                                         <div style={{ display: 'flex', gap: '10px' }}>
                                             <button type="submit" className="btn btn-primary">Add Manager</button>
@@ -1691,6 +2403,10 @@
                                         handleAddJobSite({
                                             name: formData.get('name'),
                                             address: formData.get('address'),
+                                            city: formData.get('city'),
+                                            state: formData.get('state'),
+                                            zipCode: formData.get('zipCode'),
+                                            country: formData.get('country') || 'USA',
                                             latitude: isNaN(latitude) ? null : latitude,
                                             longitude: isNaN(longitude) ? null : longitude,
                                             radius: radius
@@ -1698,11 +2414,31 @@
                                     }}>
                                         <div className="form-group">
                                             <label>Job Site Name</label>
-                                            <input type="text" name="name" required />
+                                            <input type="text" name="name" placeholder="e.g., Downtown Construction Site" required />
                                         </div>
                                         <div className="form-group">
-                                            <label>Address</label>
-                                            <input type="text" name="address" required />
+                                            <label>Street Address</label>
+                                            <input type="text" name="address" placeholder="123 Main Street" required />
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <div className="form-group" style={{ flex: 1 }}>
+                                                <label>City</label>
+                                                <input type="text" name="city" placeholder="New York" required />
+                                            </div>
+                                            <div className="form-group" style={{ flex: 1 }}>
+                                                <label>State</label>
+                                                <input type="text" name="state" placeholder="NY" required />
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <div className="form-group" style={{ flex: 1 }}>
+                                                <label>ZIP Code</label>
+                                                <input type="text" name="zipCode" placeholder="10001" required />
+                                            </div>
+                                            <div className="form-group" style={{ flex: 1 }}>
+                                                <label>Country</label>
+                                                <input type="text" name="country" defaultValue="USA" />
+                                            </div>
                                         </div>
                                         <div className="form-group">
                                             <label>GPS Coordinates (Optional)</label>
