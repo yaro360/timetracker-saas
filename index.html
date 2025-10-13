@@ -494,6 +494,62 @@
                     return R * c;
                 };
 
+                // Geofencing system for automatic clock-in/out prompts
+                const [geofencingEnabled, setGeofencingEnabled] = useState(true);
+                const [lastLocationCheck, setLastLocationCheck] = useState(null);
+                const [nearbyJobSites, setNearbyJobSites] = useState([]);
+
+                const checkGeofencing = (currentLocation) => {
+                    if (!geofencingEnabled || !currentLocation) return;
+
+                    const nearbySites = [];
+                    jobSites.forEach(site => {
+                        if (site.latitude && site.longitude) {
+                            const distance = calculateDistance(
+                                currentLocation.lat,
+                                currentLocation.lng,
+                                site.latitude,
+                                site.longitude
+                            );
+                            
+                            if (distance <= (site.radius || 100)) {
+                                nearbySites.push({ ...site, distance });
+                            }
+                        }
+                    });
+
+                    setNearbyJobSites(nearbySites);
+
+                    // Check if we entered a new job site
+                    if (nearbySites.length > 0 && !isClockedIn) {
+                        const closestSite = nearbySites.reduce((prev, current) => 
+                            prev.distance < current.distance ? prev : current
+                        );
+                        
+                        // Show auto-clock-in prompt
+                        if (confirm(`📍 You're near "${closestSite.name}" (${Math.round(closestSite.distance)}m away)\n\nWould you like to clock in automatically?`)) {
+                            setSelectedJobSite(closestSite.name);
+                            handleClockIn();
+                        }
+                    }
+
+                    // Check if we left a job site while clocked in
+                    if (isClockedIn && nearbySites.length === 0 && lastLocationCheck) {
+                        const wasNearby = lastLocationCheck.some(site => 
+                            jobSites.find(js => js.name === selectedJobSite && 
+                                calculateDistance(currentLocation.lat, currentLocation.lng, js.latitude, js.longitude) <= (js.radius || 100))
+                        );
+                        
+                        if (wasNearby) {
+                            if (confirm(`📍 You've left the "${selectedJobSite}" area\n\nWould you like to clock out automatically?`)) {
+                                handleClockOut();
+                            }
+                        }
+                    }
+
+                    setLastLocationCheck(nearbySites);
+                };
+
                 useEffect(() => {
                     const timer = setInterval(() => {
                         setCurrentTime(new Date().toLocaleTimeString());
@@ -506,24 +562,38 @@
                     DataManager.save('timeEntries', timeEntries);
                 }, [timeEntries]);
 
-                // Get current location on component mount
+                // Get current location on component mount and enable geofencing
                 useEffect(() => {
-                    if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(
-                            (position) => {
-                                setCurrentLocation({
-                                    lat: position.coords.latitude,
-                                    lng: position.coords.longitude,
-                                    accuracy: position.coords.accuracy
-                                });
-                            },
-                            (error) => {
-                                console.log('Geolocation error:', error);
-                            },
-                            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-                        );
-                    }
-                }, []);
+                    const updateLocation = () => {
+                        if (navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(
+                                (position) => {
+                                    const newLocation = {
+                                        lat: position.coords.latitude,
+                                        lng: position.coords.longitude,
+                                        accuracy: position.coords.accuracy
+                                    };
+                                    setCurrentLocation(newLocation);
+                                    checkGeofencing(newLocation);
+                                },
+                                (error) => {
+                                    console.log('Geolocation error:', error);
+                                },
+                                { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+                            );
+                        }
+                    };
+
+                    // Initial location update
+                    updateLocation();
+
+                    // Update location every 30 seconds for geofencing
+                    const locationTimer = setInterval(updateLocation, 30000);
+
+                    return () => {
+                        clearInterval(locationTimer);
+                    };
+                }, [jobSites, isClockedIn, selectedJobSite]);
 
                 const capturePhoto = () => {
                     // Try to use camera directly first (mobile)
@@ -835,6 +905,41 @@
                                     <div className="location-display">
                                         <strong>GPS:</strong> {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}<br/>
                                         <strong>Accuracy:</strong> ±{Math.round(currentLocation.accuracy)}m
+                                        
+                                        {/* Geofencing Status */}
+                                        <div style={{ marginTop: '10px', padding: '8px', backgroundColor: geofencingEnabled ? '#d4edda' : '#f8d7da', borderRadius: '4px', fontSize: '12px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                <span>
+                                                    🎯 Geofencing: {geofencingEnabled ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                                <button 
+                                                    onClick={() => setGeofencingEnabled(!geofencingEnabled)}
+                                                    style={{ 
+                                                        padding: '2px 8px', 
+                                                        fontSize: '10px', 
+                                                        backgroundColor: geofencingEnabled ? '#dc3545' : '#28a745',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '3px',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    {geofencingEnabled ? 'Disable' : 'Enable'}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Nearby Job Sites */}
+                                        {nearbyJobSites.length > 0 && (
+                                            <div style={{ marginTop: '10px', padding: '8px', backgroundColor: '#e7f3ff', borderRadius: '4px', fontSize: '12px' }}>
+                                                <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>📍 Nearby Job Sites:</div>
+                                                {nearbyJobSites.map((site, index) => (
+                                                    <div key={index} style={{ marginBottom: '3px' }}>
+                                                        • {site.name} ({Math.round(site.distance)}m away)
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                     
                                     {/* Map Display */}
@@ -1084,17 +1189,149 @@
                                 </div>
                             </div>
 
+                            {/* Comprehensive Reporting Dashboard */}
                             <div style={{ marginBottom: '20px' }}>
-                                <h3>Recent Reports</h3>
-                                {reports.map(report => (
-                                    <div key={report.id} className="activity-item">
-                                        <div>
-                                            <div className="activity-action">{report.title}</div>
-                                            <div className="activity-user">Status: {report.status}</div>
+                                <h3>📊 Analytics & Reports</h3>
+                                
+                                {/* Quick Stats */}
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginBottom: '20px' }}>
+                                    <div className="stat-card" style={{ backgroundColor: '#e3f2fd' }}>
+                                        <div className="stat-number" style={{ color: '#1976d2' }}>
+                                            {teamMembers.filter(m => m.status === 'clocked-in').length}
                                         </div>
-                                        <span className="activity-time">{report.date}</span>
+                                        <div className="stat-label">Currently Working</div>
                                     </div>
-                                ))}
+                                    <div className="stat-card" style={{ backgroundColor: '#f3e5f5' }}>
+                                        <div className="stat-number" style={{ color: '#7b1fa2' }}>
+                                            {teamMembers.reduce((sum, m) => sum + parseFloat(m.hours.replace('h', '')), 0).toFixed(1)}h
+                                        </div>
+                                        <div className="stat-label">Total Hours Today</div>
+                                    </div>
+                                    <div className="stat-card" style={{ backgroundColor: '#e8f5e8' }}>
+                                        <div className="stat-number" style={{ color: '#388e3c' }}>
+                                            {teamMembers.length}
+                                        </div>
+                                        <div className="stat-label">Total Employees</div>
+                                    </div>
+                                    <div className="stat-card" style={{ backgroundColor: '#fff3e0' }}>
+                                        <div className="stat-number" style={{ color: '#f57c00' }}>
+                                            {Math.round(teamMembers.reduce((sum, m) => sum + parseFloat(m.hours.replace('h', '')), 0) / teamMembers.length * 10) / 10}h
+                                        </div>
+                                        <div className="stat-label">Avg Hours/Employee</div>
+                                    </div>
+                                </div>
+
+                                {/* Detailed Reports */}
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                                    {/* Labor Cost Analysis */}
+                                    <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+                                        <h4 style={{ marginTop: 0, color: '#495057' }}>💰 Labor Cost Analysis</h4>
+                                        <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                                            <div style={{ marginBottom: '10px' }}>
+                                                <strong>Today's Labor Cost:</strong> ${(teamMembers.reduce((sum, m) => sum + parseFloat(m.hours.replace('h', '')), 0) * 25).toFixed(2)}
+                                                <small style={{ color: '#6c757d', marginLeft: '5px' }}>(@ $25/hr avg)</small>
+                                            </div>
+                                            <div style={{ marginBottom: '10px' }}>
+                                                <strong>Weekly Projection:</strong> ${(teamMembers.reduce((sum, m) => sum + parseFloat(m.hours.replace('h', '')), 0) * 25 * 5).toFixed(2)}
+                                            </div>
+                                            <div style={{ marginBottom: '10px' }}>
+                                                <strong>Overtime Hours:</strong> {teamMembers.filter(m => parseFloat(m.hours.replace('h', '')) > 8).length} employees
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Attendance Analytics */}
+                                    <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+                                        <h4 style={{ marginTop: 0, color: '#495057' }}>📈 Attendance Analytics</h4>
+                                        <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                                            <div style={{ marginBottom: '10px' }}>
+                                                <strong>Attendance Rate:</strong> {Math.round((teamMembers.filter(m => m.status !== 'absent').length / teamMembers.length) * 100)}%
+                                            </div>
+                                            <div style={{ marginBottom: '10px' }}>
+                                                <strong>Punctuality:</strong> {Math.round((teamMembers.filter(m => m.lastActivity.includes('min ago')).length / teamMembers.length) * 100)}%
+                                            </div>
+                                            <div style={{ marginBottom: '10px' }}>
+                                                <strong>Active Workers:</strong> {teamMembers.filter(m => m.status === 'clocked-in').length}/{teamMembers.length}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Productivity Metrics */}
+                                    <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+                                        <h4 style={{ marginTop: 0, color: '#495057' }}>⚡ Productivity Metrics</h4>
+                                        <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                                            <div style={{ marginBottom: '10px' }}>
+                                                <strong>Hours per Employee:</strong> {Math.round(teamMembers.reduce((sum, m) => sum + parseFloat(m.hours.replace('h', '')), 0) / teamMembers.length * 10) / 10}h
+                                            </div>
+                                            <div style={{ marginBottom: '10px' }}>
+                                                <strong>Most Productive:</strong> {teamMembers.reduce((prev, current) => parseFloat(prev.hours.replace('h', '')) > parseFloat(current.hours.replace('h', '')) ? prev : current).name}
+                                            </div>
+                                            <div style={{ marginBottom: '10px' }}>
+                                                <strong>Efficiency Score:</strong> {Math.round((teamMembers.filter(m => m.status === 'clocked-in').length / teamMembers.length) * 100)}%
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Export Options */}
+                                    <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+                                        <h4 style={{ marginTop: 0, color: '#495057' }}>📤 Export Reports</h4>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                            <button 
+                                                className="btn btn-outline" 
+                                                onClick={() => {
+                                                    const csvData = teamMembers.map(m => ({
+                                                        Name: m.name,
+                                                        Role: m.role,
+                                                        Status: m.status,
+                                                        Hours: m.hours,
+                                                        LastActivity: m.lastActivity
+                                                    }));
+                                                    const csv = Object.keys(csvData[0]).join(',') + '\n' + 
+                                                            csvData.map(row => Object.values(row).join(',')).join('\n');
+                                                    const blob = new Blob([csv], { type: 'text/csv' });
+                                                    const url = URL.createObjectURL(blob);
+                                                    const a = document.createElement('a');
+                                                    a.href = url;
+                                                    a.download = 'team-report.csv';
+                                                    a.click();
+                                                }}
+                                                style={{ fontSize: '14px', padding: '8px 16px' }}
+                                            >
+                                                📊 Export CSV
+                                            </button>
+                                            <button 
+                                                className="btn btn-outline" 
+                                                onClick={() => {
+                                                    const reportData = {
+                                                        date: new Date().toLocaleDateString(),
+                                                        totalEmployees: teamMembers.length,
+                                                        activeEmployees: teamMembers.filter(m => m.status === 'clocked-in').length,
+                                                        totalHours: teamMembers.reduce((sum, m) => sum + parseFloat(m.hours.replace('h', '')), 0),
+                                                        laborCost: teamMembers.reduce((sum, m) => sum + parseFloat(m.hours.replace('h', '')), 0) * 25
+                                                    };
+                                                    alert(`📋 Daily Report Summary:\n\nDate: ${reportData.date}\nTotal Employees: ${reportData.totalEmployees}\nActive: ${reportData.activeEmployees}\nTotal Hours: ${reportData.totalHours}h\nLabor Cost: $${reportData.laborCost.toFixed(2)}`);
+                                                }}
+                                                style={{ fontSize: '14px', padding: '8px 16px' }}
+                                            >
+                                                📋 Generate Summary
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Recent Reports */}
+                                <div style={{ marginTop: '20px' }}>
+                                    <h4>📋 Recent Reports</h4>
+                                    {reports.map(report => (
+                                        <div key={report.id} className="activity-item">
+                                            <div>
+                                                <div className="activity-action">{report.title}</div>
+                                                <div className="activity-user">Status: {report.status}</div>
+                                            </div>
+                                            <span className="activity-time">{report.date}</span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
 
                             <button className="btn btn-outline" onClick={logout}>
