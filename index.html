@@ -572,9 +572,11 @@
                     // Calculate duration properly
                     let duration = 0;
                     if (clockInTime) {
-                        const clockInDate = new Date();
+                        // Create a proper date for today with the clock-in time
+                        const today = new Date();
                         const [hours, minutes, seconds] = clockInTime.split(':');
-                        clockInDate.setHours(parseInt(hours), parseInt(minutes), parseInt(seconds), 0);
+                        const clockInDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 
+                                                   parseInt(hours), parseInt(minutes), parseInt(seconds));
                         duration = Math.round((now - clockInDate) / (1000 * 60)); // duration in minutes
                     }
                     
@@ -690,13 +692,10 @@
                                     {/* Map Display */}
                                     <div className="map-container">
                                         <iframe
-                                            src={`https://www.google.com/maps/embed/v1/view?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dOWWgUfOq8e7hY&center=${currentLocation.lat},${currentLocation.lng}&zoom=15`}
+                                            src={`https://www.openstreetmap.org/export/embed.html?bbox=${currentLocation.lng-0.01},${currentLocation.lat-0.01},${currentLocation.lng+0.01},${currentLocation.lat+0.01}&layer=mapnik&marker=${currentLocation.lat},${currentLocation.lng}`}
                                             width="100%"
                                             height="100%"
                                             style={{ border: 0 }}
-                                            allowFullScreen=""
-                                            loading="lazy"
-                                            referrerPolicy="no-referrer-when-downgrade"
                                         ></iframe>
                                     </div>
                                 </div>
@@ -1322,6 +1321,47 @@
 
             // Login Form Component
             const LoginForm = () => {
+                const [showRegister, setShowRegister] = useState(false);
+                const [registerData, setRegisterData] = useState({
+                    username: '',
+                    password: '',
+                    email: '',
+                    firstName: '',
+                    lastName: '',
+                    role: 'employee'
+                });
+
+                const handleRegister = (e) => {
+                    e.preventDefault();
+                    const users = DataManager.load('users', []);
+                    
+                    // Check if username already exists
+                    if (users.find(u => u.username === registerData.username)) {
+                        alert('Username already exists!');
+                        return;
+                    }
+
+                    const newUser = {
+                        id: Date.now().toString(),
+                        ...registerData,
+                        createdAt: new Date().toISOString()
+                    };
+
+                    users.push(newUser);
+                    DataManager.save('users', users);
+                    
+                    alert('Account created successfully! You can now login.');
+                    setShowRegister(false);
+                    setRegisterData({
+                        username: '',
+                        password: '',
+                        email: '',
+                        firstName: '',
+                        lastName: '',
+                        role: 'employee'
+                    });
+                };
+
                 return (
                     <div className="container">
                         <div className="card">
@@ -1329,60 +1369,156 @@
                             <h1>TimeTracker</h1>
                             <p className="subtitle">Multi-Company Location-Based Timesheet Platform</p>
                             
-                            <form onSubmit={handleSubmit}>
-                                <div className="form-group">
-                                    <label htmlFor="username">Username</label>
-                                    <input
-                                        type="text"
-                                        id="username"
-                                        value={formData.username}
-                                        onChange={(e) => setFormData({...formData, username: e.target.value})}
-                                        required
-                                    />
-                                </div>
-                                
-                                <div className="form-group">
-                                    <label htmlFor="password">Password</label>
-                                    <input
-                                        type="password"
-                                        id="password"
-                                        value={formData.password}
-                                        onChange={(e) => setFormData({...formData, password: e.target.value})}
-                                        required
-                                    />
-                                </div>
-                                
-                                <button type="submit" className="btn" style={{ width: '100%', marginBottom: '20px' }}>
-                                    Login
-                                </button>
-                            </form>
+                            {!showRegister ? (
+                                <>
+                                    <form onSubmit={handleSubmit}>
+                                        <div className="form-group">
+                                            <label htmlFor="username">Username</label>
+                                            <input
+                                                type="text"
+                                                id="username"
+                                                value={formData.username}
+                                                onChange={(e) => setFormData({...formData, username: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+                                        
+                                        <div className="form-group">
+                                            <label htmlFor="password">Password</label>
+                                            <input
+                                                type="password"
+                                                id="password"
+                                                value={formData.password}
+                                                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+                                        
+                                        <button type="submit" className="btn" style={{ width: '100%', marginBottom: '20px' }}>
+                                            Login
+                                        </button>
+                                    </form>
 
-                            <div className="demo-section">
-                                <p className="demo-label">Quick Demo Access:</p>
-                                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                                    <button 
-                                        type="button" 
-                                        className="btn btn-demo"
-                                        onClick={() => handleDemoLogin('employee')}
-                                    >
-                                        Employee Demo
-                                    </button>
-                                    <button 
-                                        type="button" 
-                                        className="btn btn-demo"
-                                        onClick={() => handleDemoLogin('manager')}
-                                    >
-                                        Manager Demo
-                                    </button>
-                                    <button 
-                                        type="button" 
-                                        className="btn btn-demo"
-                                        onClick={() => handleDemoLogin('owner')}
-                                    >
-                                        Owner Demo
-                                    </button>
-                                </div>
-                            </div>
+                                    <div className="demo-section">
+                                        <p className="demo-label">Quick Demo Access:</p>
+                                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                                            <button 
+                                                type="button" 
+                                                className="btn btn-demo"
+                                                onClick={() => handleDemoLogin('employee')}
+                                            >
+                                                Employee Demo
+                                            </button>
+                                            <button 
+                                                type="button" 
+                                                className="btn btn-demo"
+                                                onClick={() => handleDemoLogin('manager')}
+                                            >
+                                                Manager Demo
+                                            </button>
+                                            <button 
+                                                type="button" 
+                                                className="btn btn-demo"
+                                                onClick={() => handleDemoLogin('owner')}
+                                            >
+                                                Owner Demo
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                                        <button 
+                                            className="btn btn-outline" 
+                                            onClick={() => setShowRegister(true)}
+                                            style={{ fontSize: '14px', padding: '8px 16px' }}
+                                        >
+                                            Create New Account
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <h2>Create Account</h2>
+                                    <form onSubmit={handleRegister}>
+                                        <div className="form-group">
+                                            <label>Username</label>
+                                            <input
+                                                type="text"
+                                                value={registerData.username}
+                                                onChange={(e) => setRegisterData({...registerData, username: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+                                        
+                                        <div className="form-group">
+                                            <label>Password</label>
+                                            <input
+                                                type="password"
+                                                value={registerData.password}
+                                                onChange={(e) => setRegisterData({...registerData, password: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label>Email</label>
+                                            <input
+                                                type="email"
+                                                value={registerData.email}
+                                                onChange={(e) => setRegisterData({...registerData, email: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label>First Name</label>
+                                            <input
+                                                type="text"
+                                                value={registerData.firstName}
+                                                onChange={(e) => setRegisterData({...registerData, firstName: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label>Last Name</label>
+                                            <input
+                                                type="text"
+                                                value={registerData.lastName}
+                                                onChange={(e) => setRegisterData({...registerData, lastName: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label>Role</label>
+                                            <select
+                                                value={registerData.role}
+                                                onChange={(e) => setRegisterData({...registerData, role: e.target.value})}
+                                                required
+                                            >
+                                                <option value="employee">Employee</option>
+                                                <option value="manager">Manager</option>
+                                                <option value="owner">Owner</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
+                                                Create Account
+                                            </button>
+                                            <button 
+                                                type="button" 
+                                                className="btn btn-outline" 
+                                                onClick={() => setShowRegister(false)}
+                                                style={{ flex: 1 }}
+                                            >
+                                                Back to Login
+                                            </button>
+                                        </div>
+                                    </form>
+                                </>
+                            )}
                         </div>
                     </div>
                 );
