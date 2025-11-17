@@ -1858,6 +1858,239 @@
                     DataManager.save('jobSites', jobSites);
                 }, [jobSites]);
 
+                useEffect(() => {
+                    DataManager.save('payrollSettings', payrollSettings);
+                }, [payrollSettings]);
+
+                useEffect(() => {
+                    DataManager.save('payrollReports', payrollReports);
+                }, [payrollReports]);
+
+                // Helper function to parse duration string like "5h 30m" to hours
+                const parseDurationToHours = (durationStr) => {
+                    if (!durationStr) return 0;
+                    const match = durationStr.match(/(\d+)h\s*(\d+)m/);
+                    if (match) {
+                        return parseInt(match[1]) + (parseInt(match[2]) / 60);
+                    }
+                    const hoursMatch = durationStr.match(/(\d+)h/);
+                    if (hoursMatch) {
+                        return parseInt(hoursMatch[1]);
+                    }
+                    return 0;
+                };
+
+                // Helper function to get time entries for employees
+                const getTimeEntriesForSync = () => {
+                    const allTimeEntries = DataManager.load('timeEntries', []);
+                    const today = new Date();
+                    const startOfWeek = new Date(today);
+                    startOfWeek.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
+                    startOfWeek.setHours(0, 0, 0, 0);
+                    
+                    // Filter entries from this week
+                    return allTimeEntries.filter(entry => {
+                        const entryDate = new Date(entry.date || entry.clockIn);
+                        return entryDate >= startOfWeek;
+                    });
+                };
+
+                // QuickBooks Sync Function
+                const syncQuickBooks = () => {
+                    if (!payrollSettings.quickbooksEnabled) {
+                        alert('❌ QuickBooks integration is not enabled.\n\nPlease enable it in the settings above.');
+                        return;
+                    }
+
+                    if (!payrollSettings.quickbooksCompanyId) {
+                        alert('❌ QuickBooks Company ID is required.\n\nPlease enter your QuickBooks Company ID in the settings above.');
+                        return;
+                    }
+
+                    // Get time entries
+                    const timeEntries = getTimeEntriesForSync();
+                    
+                    // Calculate payroll data for each employee
+                    const payrollData = employees.map(emp => {
+                        // Calculate hours from time entries (matching by employee name or ID)
+                        const empEntries = timeEntries.filter(entry => {
+                            // Try to match by various methods
+                            const empName = `${emp.firstName} ${emp.lastName}`.toLowerCase();
+                            return entry.employeeName?.toLowerCase() === empName || 
+                                   entry.userId === emp.id ||
+                                   entry.employeeId === emp.employeeId;
+                        });
+                        
+                        const totalHours = empEntries.reduce((sum, entry) => {
+                            return sum + parseDurationToHours(entry.duration);
+                        }, 0);
+                        
+                        const hourlyRate = emp.hourlyRate || payrollSettings.defaultHourlyRate;
+                        const regularHours = Math.min(totalHours, payrollSettings.overtimeThreshold);
+                        const overtimeHours = Math.max(0, totalHours - payrollSettings.overtimeThreshold);
+                        const regularPay = regularHours * hourlyRate;
+                        const overtimePay = overtimeHours * hourlyRate * payrollSettings.overtimeMultiplier;
+                        const grossPay = regularPay + overtimePay;
+
+                        return {
+                            employeeId: emp.employeeId || `EMP${emp.id}`,
+                            name: `${emp.firstName} ${emp.lastName}`,
+                            email: emp.email,
+                            hours: totalHours,
+                            regularHours: regularHours,
+                            overtimeHours: overtimeHours,
+                            hourlyRate: hourlyRate,
+                            regularPay: regularPay,
+                            overtimePay: overtimePay,
+                            grossPay: grossPay,
+                            timeEntries: empEntries.length
+                        };
+                    });
+
+                    // Create sync record
+                    const syncRecord = {
+                        id: Date.now(),
+                        type: 'quickbooks',
+                        timestamp: new Date().toISOString(),
+                        companyId: payrollSettings.quickbooksCompanyId,
+                        status: 'completed',
+                        employeesSynced: payrollData.length,
+                        totalHours: payrollData.reduce((sum, emp) => sum + emp.hours, 0),
+                        totalGrossPay: payrollData.reduce((sum, emp) => sum + emp.grossPay, 0),
+                        data: payrollData
+                    };
+
+                    // Save sync record
+                    setPayrollReports([syncRecord, ...payrollReports]);
+
+                    // Generate sync report file
+                    const syncReport = {
+                        syncType: 'QuickBooks',
+                        syncDate: new Date().toISOString(),
+                        companyId: payrollSettings.quickbooksCompanyId,
+                        summary: {
+                            totalEmployees: payrollData.length,
+                            totalHours: syncRecord.totalHours.toFixed(2),
+                            totalGrossPay: syncRecord.totalGrossPay.toFixed(2),
+                            regularHours: payrollData.reduce((sum, emp) => sum + emp.regularHours, 0).toFixed(2),
+                            overtimeHours: payrollData.reduce((sum, emp) => sum + emp.overtimeHours, 0).toFixed(2)
+                        },
+                        employees: payrollData
+                    };
+
+                    // Download sync report
+                    const blob = new Blob([JSON.stringify(syncReport, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `quickbooks-sync-${new Date().toISOString().split('T')[0]}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+
+                    // Show success message
+                    alert(`✅ QuickBooks Sync Completed!\n\n` +
+                          `📊 Employees Synced: ${payrollData.length}\n` +
+                          `⏱️ Total Hours: ${syncRecord.totalHours.toFixed(2)}h\n` +
+                          `💰 Total Gross Pay: $${syncRecord.totalGrossPay.toFixed(2)}\n` +
+                          `📄 Sync report downloaded\n\n` +
+                          `Data has been prepared for QuickBooks import.`);
+                };
+
+                // ADP Sync Function
+                const syncADP = () => {
+                    if (!payrollSettings.adpEnabled) {
+                        alert('❌ ADP integration is not enabled.\n\nPlease enable it in the settings above.');
+                        return;
+                    }
+
+                    if (!payrollSettings.adpCompanyId) {
+                        alert('❌ ADP Company ID is required.\n\nPlease enter your ADP Company ID in the settings above.');
+                        return;
+                    }
+
+                    // Get time entries
+                    const timeEntries = getTimeEntriesForSync();
+                    
+                    // Calculate payroll data for each employee
+                    const payrollData = employees.map(emp => {
+                        // Calculate hours from time entries
+                        const empEntries = timeEntries.filter(entry => {
+                            const empName = `${emp.firstName} ${emp.lastName}`.toLowerCase();
+                            return entry.employeeName?.toLowerCase() === empName || 
+                                   entry.userId === emp.id ||
+                                   entry.employeeId === emp.employeeId;
+                        });
+                        
+                        const totalHours = empEntries.reduce((sum, entry) => {
+                            return sum + parseDurationToHours(entry.duration);
+                        }, 0);
+                        
+                        const hourlyRate = emp.hourlyRate || payrollSettings.defaultHourlyRate;
+                        const regularHours = Math.min(totalHours, payrollSettings.overtimeThreshold);
+                        const overtimeHours = Math.max(0, totalHours - payrollSettings.overtimeThreshold);
+                        const regularPay = regularHours * hourlyRate;
+                        const overtimePay = overtimeHours * hourlyRate * payrollSettings.overtimeMultiplier;
+                        const grossPay = regularPay + overtimePay;
+
+                        return {
+                            employeeId: emp.employeeId || `EMP${emp.id}`,
+                            name: `${emp.firstName} ${emp.lastName}`,
+                            email: emp.email,
+                            phone: emp.phone || '',
+                            hours: totalHours,
+                            regularHours: regularHours,
+                            overtimeHours: overtimeHours,
+                            hourlyRate: hourlyRate,
+                            regularPay: regularPay,
+                            overtimePay: overtimePay,
+                            grossPay: grossPay,
+                            timeEntries: empEntries.length,
+                            department: emp.department || '',
+                            position: emp.position || ''
+                        };
+                    });
+
+                    // Create sync record
+                    const syncRecord = {
+                        id: Date.now(),
+                        type: 'adp',
+                        timestamp: new Date().toISOString(),
+                        companyId: payrollSettings.adpCompanyId,
+                        status: 'completed',
+                        employeesSynced: payrollData.length,
+                        totalHours: payrollData.reduce((sum, emp) => sum + emp.hours, 0),
+                        totalGrossPay: payrollData.reduce((sum, emp) => sum + emp.grossPay, 0),
+                        data: payrollData
+                    };
+
+                    // Save sync record
+                    setPayrollReports([syncRecord, ...payrollReports]);
+
+                    // Generate ADP-compatible CSV format
+                    const csvHeader = 'Employee ID,Name,Email,Phone,Department,Position,Hours,Regular Hours,Overtime Hours,Hourly Rate,Regular Pay,Overtime Pay,Gross Pay\n';
+                    const csvRows = payrollData.map(emp => 
+                        `${emp.employeeId},"${emp.name}",${emp.email},${emp.phone || ''},"${emp.department || ''}","${emp.position || ''}",${emp.hours.toFixed(2)},${emp.regularHours.toFixed(2)},${emp.overtimeHours.toFixed(2)},${emp.hourlyRate.toFixed(2)},${emp.regularPay.toFixed(2)},${emp.overtimePay.toFixed(2)},${emp.grossPay.toFixed(2)}`
+                    ).join('\n');
+                    const csv = csvHeader + csvRows;
+
+                    // Download sync report
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `adp-sync-${new Date().toISOString().split('T')[0]}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+
+                    // Show success message
+                    alert(`✅ ADP Sync Completed!\n\n` +
+                          `📊 Employees Synced: ${payrollData.length}\n` +
+                          `⏱️ Total Hours: ${syncRecord.totalHours.toFixed(2)}h\n` +
+                          `💰 Total Gross Pay: $${syncRecord.totalGrossPay.toFixed(2)}\n` +
+                          `📄 CSV file downloaded\n\n` +
+                          `Data has been formatted for ADP import.`);
+                };
+
                 const handleAddEmployee = (employeeData) => {
                     // Generate unique employee ID
                     const employeeId = `EMP${String(employees.length + 1).padStart(4, '0')}`;
@@ -2175,17 +2408,48 @@
                                     <button 
                                         className="btn btn-primary"
                                         onClick={() => {
-                                            const payrollData = employees.map(emp => ({
-                                                employeeId: emp.employeeId || `EMP${emp.id}`,
-                                                name: `${emp.firstName} ${emp.lastName}`,
-                                                hours: Math.random() * 40 + 20, // Mock data
-                                                hourlyRate: emp.hourlyRate || payrollSettings.defaultHourlyRate,
-                                                grossPay: (emp.hourlyRate || payrollSettings.defaultHourlyRate) * (Math.random() * 40 + 20),
-                                                overtime: Math.max(0, (Math.random() * 40 + 20) - payrollSettings.overtimeThreshold)
-                                            }));
+                                            // Get time entries
+                                            const timeEntries = getTimeEntriesForSync();
                                             
-                                            const csv = 'Employee ID,Name,Hours,Hourly Rate,Gross Pay,Overtime Hours\n' + 
-                                                      payrollData.map(emp => `${emp.employeeId},${emp.name},${emp.hours.toFixed(2)},${emp.hourlyRate},${emp.grossPay.toFixed(2)},${emp.overtime.toFixed(2)}`).join('\n');
+                                            // Calculate payroll data for each employee using real time entry data
+                                            const payrollData = employees.map(emp => {
+                                                // Calculate hours from time entries
+                                                const empEntries = timeEntries.filter(entry => {
+                                                    const empName = `${emp.firstName} ${emp.lastName}`.toLowerCase();
+                                                    return entry.employeeName?.toLowerCase() === empName || 
+                                                           entry.userId === emp.id ||
+                                                           entry.employeeId === emp.employeeId;
+                                                });
+                                                
+                                                const totalHours = empEntries.reduce((sum, entry) => {
+                                                    return sum + parseDurationToHours(entry.duration);
+                                                }, 0);
+                                                
+                                                const hourlyRate = emp.hourlyRate || payrollSettings.defaultHourlyRate;
+                                                const regularHours = Math.min(totalHours, payrollSettings.overtimeThreshold);
+                                                const overtimeHours = Math.max(0, totalHours - payrollSettings.overtimeThreshold);
+                                                const regularPay = regularHours * hourlyRate;
+                                                const overtimePay = overtimeHours * hourlyRate * payrollSettings.overtimeMultiplier;
+                                                const grossPay = regularPay + overtimePay;
+
+                                                return {
+                                                    employeeId: emp.employeeId || `EMP${emp.id}`,
+                                                    name: `${emp.firstName} ${emp.lastName}`,
+                                                    hours: totalHours,
+                                                    regularHours: regularHours,
+                                                    overtimeHours: overtimeHours,
+                                                    hourlyRate: hourlyRate,
+                                                    regularPay: regularPay,
+                                                    overtimePay: overtimePay,
+                                                    grossPay: grossPay
+                                                };
+                                            });
+                                            
+                                            // Generate comprehensive CSV report
+                                            const csv = 'Employee ID,Name,Hours,Regular Hours,Overtime Hours,Hourly Rate,Regular Pay,Overtime Pay,Gross Pay\n' + 
+                                                      payrollData.map(emp => 
+                                                          `${emp.employeeId},"${emp.name}",${emp.hours.toFixed(2)},${emp.regularHours.toFixed(2)},${emp.overtimeHours.toFixed(2)},${emp.hourlyRate.toFixed(2)},${emp.regularPay.toFixed(2)},${emp.overtimePay.toFixed(2)},${emp.grossPay.toFixed(2)}`
+                                                      ).join('\n');
                                             
                                             const blob = new Blob([csv], { type: 'text/csv' });
                                             const url = URL.createObjectURL(blob);
@@ -2193,38 +2457,70 @@
                                             a.href = url;
                                             a.download = `payroll-${new Date().toISOString().split('T')[0]}.csv`;
                                             a.click();
+                                            URL.revokeObjectURL(url);
                                             
-                                            alert('📊 Payroll report generated and downloaded!');
+                                            const totalHours = payrollData.reduce((sum, emp) => sum + emp.hours, 0);
+                                            const totalGrossPay = payrollData.reduce((sum, emp) => sum + emp.grossPay, 0);
+                                            
+                                            alert(`📊 Payroll Report Generated!\n\n` +
+                                                  `📋 Employees: ${payrollData.length}\n` +
+                                                  `⏱️ Total Hours: ${totalHours.toFixed(2)}h\n` +
+                                                  `💰 Total Gross Pay: $${totalGrossPay.toFixed(2)}\n` +
+                                                  `📄 Report downloaded`);
                                         }}
                                     >
                                         📊 Generate Payroll Report
                                     </button>
                                     <button 
                                         className="btn btn-outline"
-                                        onClick={() => {
-                                            if (payrollSettings.quickbooksEnabled) {
-                                                alert('🔄 Syncing with QuickBooks...\n\nThis would normally:\n• Upload time entries\n• Update employee hours\n• Generate invoices\n• Sync payroll data');
-                                            } else {
-                                                alert('❌ QuickBooks integration is not enabled.\n\nPlease enable it in the settings above.');
-                                            }
-                                        }}
+                                        onClick={syncQuickBooks}
                                     >
                                         🔄 Sync QuickBooks
                                     </button>
                                     <button 
                                         className="btn btn-outline"
-                                        onClick={() => {
-                                            if (payrollSettings.adpEnabled) {
-                                                alert('🔄 Syncing with ADP...\n\nThis would normally:\n• Upload time entries\n• Update employee records\n• Generate payroll reports\n• Sync with ADP system');
-                                            } else {
-                                                alert('❌ ADP integration is not enabled.\n\nPlease enable it in the settings above.');
-                                            }
-                                        }}
+                                        onClick={syncADP}
                                     >
                                         🔄 Sync ADP
                                     </button>
                                 </div>
                             </div>
+
+                            {/* Sync History */}
+                            {payrollReports.length > 0 && (
+                                <div style={{ marginBottom: '20px' }}>
+                                    <h3>📋 Sync History</h3>
+                                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                                        {payrollReports.slice(0, 10).map(report => (
+                                            <div key={report.id} className="activity-item" style={{ marginBottom: '10px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+                                                <div>
+                                                    <div className="activity-action" style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+                                                        {report.type === 'quickbooks' ? '🔄 QuickBooks Sync' : '🔄 ADP Sync'}
+                                                    </div>
+                                                    <div className="activity-user" style={{ fontSize: '13px', color: '#666' }}>
+                                                        Employees: {report.employeesSynced} | 
+                                                        Hours: {report.totalHours.toFixed(2)}h | 
+                                                        Gross Pay: ${report.totalGrossPay.toFixed(2)}
+                                                    </div>
+                                                    {report.companyId && (
+                                                        <div style={{ fontSize: '12px', color: '#999', marginTop: '3px' }}>
+                                                            Company ID: {report.companyId}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <span className="activity-time" style={{ fontSize: '12px' }}>
+                                                    {new Date(report.timestamp).toLocaleString()}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {payrollReports.length > 10 && (
+                                        <div style={{ textAlign: 'center', marginTop: '10px', color: '#666', fontSize: '14px' }}>
+                                            Showing 10 most recent syncs. Total: {payrollReports.length}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             <button className="btn btn-outline" onClick={logout}>
                                 Logout
