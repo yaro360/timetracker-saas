@@ -1085,6 +1085,7 @@
                     { id: 2, title: 'Electrical Installation', description: 'Install electrical systems', assignee: 'Sarah Johnson', jobSite: 'Office Building B', priority: 'medium', status: 'pending', dueDate: '2024-01-30', createdAt: '2024-01-20' }
                 ]));
                 const [showAddTask, setShowAddTask] = useState(false);
+                const [teamMessages, setTeamMessages] = useState(DataManager.load('teamMessages', []));
 
                 // Save data whenever it changes
                 useEffect(() => {
@@ -1102,6 +1103,10 @@
                 useEffect(() => {
                     DataManager.save('tasks', tasks);
                 }, [tasks]);
+
+                useEffect(() => {
+                    DataManager.save('teamMessages', teamMessages);
+                }, [teamMessages]);
 
                 const handleAddTask = (taskData) => {
                     const newTask = {
@@ -1179,8 +1184,18 @@
 
                 const sendTeamMessage = () => {
                     const message = prompt('Enter message to send to team:');
-                    if (message) {
-                        alert(`Message sent to all team members: "${message}"`);
+                    if (message && message.trim()) {
+                        const newMessage = {
+                            id: Date.now(),
+                            message: message.trim(),
+                            sender: `${user.firstName} ${user.lastName}`,
+                            senderRole: user.role,
+                            timestamp: new Date().toISOString(),
+                            recipients: teamMembers.length,
+                            status: 'sent'
+                        };
+                        setTeamMessages([newMessage, ...teamMessages]);
+                        alert(`✅ Message sent successfully to ${teamMembers.length} team member${teamMembers.length !== 1 ? 's' : ''}!\n\nMessage: "${message}"`);
                     }
                 };
 
@@ -1386,6 +1401,35 @@
                                     ))}
                                 </div>
                             </div>
+
+                            {/* Team Messages History */}
+                            {teamMessages.length > 0 && (
+                                <div style={{ marginBottom: '20px' }}>
+                                    <h3>💬 Team Messages</h3>
+                                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                                        {teamMessages.slice(0, 10).map(msg => (
+                                            <div key={msg.id} className="activity-item" style={{ marginBottom: '10px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+                                                <div>
+                                                    <div className="activity-action" style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+                                                        {msg.message}
+                                                    </div>
+                                                    <div className="activity-user" style={{ fontSize: '13px', color: '#666' }}>
+                                                        From: {msg.sender} ({msg.senderRole}) | To: {msg.recipients} team member{msg.recipients !== 1 ? 's' : ''}
+                                                    </div>
+                                                </div>
+                                                <span className="activity-time" style={{ fontSize: '12px' }}>
+                                                    {new Date(msg.timestamp).toLocaleString()}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {teamMessages.length > 10 && (
+                                        <div style={{ textAlign: 'center', marginTop: '10px', color: '#666', fontSize: '14px' }}>
+                                            Showing 10 most recent messages. Total: {teamMessages.length}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Scheduling & Shift Management */}
                             <div style={{ marginBottom: '20px' }}>
