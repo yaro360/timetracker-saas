@@ -352,17 +352,26 @@
 
         // Data Persistence Helper
         const DataManager = {
-            save: (key, data) => {
+            // Get company-specific key
+            getCompanyKey: (baseKey, companyId) => {
+                if (companyId) {
+                    return `${baseKey}_${companyId}`;
+                }
+                return baseKey;
+            },
+            save: (key, data, companyId = null) => {
                 try {
-                    localStorage.setItem(key, JSON.stringify(data));
-                    console.log(`Saved ${key} to localStorage`);
+                    const storageKey = companyId ? DataManager.getCompanyKey(key, companyId) : key;
+                    localStorage.setItem(storageKey, JSON.stringify(data));
+                    console.log(`Saved ${storageKey} to localStorage`);
                 } catch (error) {
                     console.error(`Error saving ${key}:`, error);
                 }
             },
-            load: (key, defaultValue = null) => {
+            load: (key, defaultValue = null, companyId = null) => {
                 try {
-                    const data = localStorage.getItem(key);
+                    const storageKey = companyId ? DataManager.getCompanyKey(key, companyId) : key;
+                    const data = localStorage.getItem(storageKey);
                     return data ? JSON.parse(data) : defaultValue;
                 } catch (error) {
                     console.error(`Error loading ${key}:`, error);
@@ -458,20 +467,31 @@
                 const demoUser = DEMO_ACCOUNTS.find(u => u.role === role);
                 if (demoUser) {
                     console.log('Demo login for role:', role);
-                    setFormData({ username: demoUser.username, password: demoUser.password });
-                    const success = login(demoUser.username, demoUser.password);
-                    if (!success) {
-                        alert('Demo login failed. Please try again.');
-                    }
+                    // Directly set user state for demo accounts
+                    setUser(demoUser);
+                    setFormData({ username: '', password: '' });
+                } else {
+                    alert('Demo account not found. Please try again.');
                 }
             };
 
             // Employee Dashboard Component
             const EmployeeDashboard = () => {
+                // Get company ID from user (or use 'demo' for demo accounts)
+                const companyId = user.companyId || (user.id && user.id.startsWith('demo-') ? 'demo' : null);
+                
+                // Demo job sites only for demo accounts
+                const demoJobSites = user.id && user.id.startsWith('demo-') ? [
+                    { id: 1, name: 'Construction Site A', address: '123 Main St', latitude: 40.7128, longitude: -74.0060, radius: 100, status: 'active' },
+                    { id: 2, name: 'Office Building B', address: '456 Oak Ave', latitude: 40.7589, longitude: -73.9851, radius: 100, status: 'active' },
+                    { id: 3, name: 'Warehouse C', address: '789 Pine Rd', latitude: 40.7505, longitude: -73.9934, radius: 100, status: 'active' }
+                ] : [];
+                
                 const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
                 const [isClockedIn, setIsClockedIn] = useState(false);
                 const [selectedJobSite, setSelectedJobSite] = useState('');
-                const [timeEntries, setTimeEntries] = useState(DataManager.load('timeEntries', []));
+                const [timeEntries, setTimeEntries] = useState(DataManager.load('timeEntries', [], companyId));
+                const [jobSites, setJobSites] = useState(DataManager.load('jobSites', demoJobSites, companyId));
                 const [clockInTime, setClockInTime] = useState(null);
                 const [capturedPhoto, setCapturedPhoto] = useState(null);
                 const [currentLocation, setCurrentLocation] = useState(null);
@@ -559,8 +579,8 @@
 
                 // Save time entries whenever they change
                 useEffect(() => {
-                    DataManager.save('timeEntries', timeEntries);
-                }, [timeEntries]);
+                    DataManager.save('timeEntries', timeEntries, companyId);
+                }, [timeEntries, companyId]);
 
                 // Get current location on component mount and enable geofencing
                 useEffect(() => {
@@ -892,9 +912,9 @@
                                     style={{ width: '100%', padding: '10px', marginTop: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
                                 >
                                     <option value="">Select Job Site</option>
-                                    <option value="Construction Site A">Construction Site A</option>
-                                    <option value="Office Building B">Office Building B</option>
-                                    <option value="Warehouse C">Warehouse C</option>
+                                    {jobSites.filter(site => site.status === 'active').map(site => (
+                                        <option key={site.id} value={site.name}>{site.name}</option>
+                                    ))}
                                 </select>
                             </div>
 
@@ -1065,48 +1085,60 @@
 
             // Manager Dashboard Component
             const ManagerDashboard = () => {
-                const [teamMembers, setTeamMembers] = useState(DataManager.load('teamMembers', [
+                // Get company ID from user (or use 'demo' for demo accounts)
+                const companyId = user.companyId || (user.id && user.id.startsWith('demo-') ? 'demo' : null);
+                
+                // Demo data only for demo accounts
+                const demoTeamMembers = user.id && user.id.startsWith('demo-') ? [
                     { id: 1, name: 'John Smith', role: 'employee', status: 'clocked-in', hours: '8.5h', lastActivity: '2 hours ago' },
                     { id: 2, name: 'Sarah Johnson', role: 'employee', status: 'clocked-out', hours: '7.2h', lastActivity: '1 hour ago' },
                     { id: 3, name: 'Mike Davis', role: 'employee', status: 'clocked-in', hours: '6.8h', lastActivity: '30 min ago' }
-                ]));
-                const [showAddMember, setShowAddMember] = useState(false);
-                const [reports, setReports] = useState(DataManager.load('reports', [
+                ] : [];
+                
+                const demoReports = user.id && user.id.startsWith('demo-') ? [
                     { id: 1, title: 'Weekly Team Report', date: '2024-01-15', status: 'completed' },
                     { id: 2, title: 'Monthly Hours Summary', date: '2024-01-01', status: 'pending' }
-                ]));
-                const [shifts, setShifts] = useState(DataManager.load('shifts', [
+                ] : [];
+                
+                const demoShifts = user.id && user.id.startsWith('demo-') ? [
                     { id: 1, employeeId: 'EMP0001', employeeName: 'John Smith', jobSite: 'Construction Site A', startTime: '08:00', endTime: '17:00', date: '2024-01-20', status: 'scheduled' },
                     { id: 2, employeeId: 'EMP0002', employeeName: 'Sarah Johnson', jobSite: 'Office Building B', startTime: '09:00', endTime: '18:00', date: '2024-01-20', status: 'scheduled' }
-                ]));
-                const [showAddShift, setShowAddShift] = useState(false);
-                const [tasks, setTasks] = useState(DataManager.load('tasks', [
+                ] : [];
+                
+                const demoTasks = user.id && user.id.startsWith('demo-') ? [
                     { id: 1, title: 'Foundation Work', description: 'Complete foundation pouring', assignee: 'John Smith', jobSite: 'Construction Site A', priority: 'high', status: 'in-progress', dueDate: '2024-01-25', createdAt: '2024-01-20' },
                     { id: 2, title: 'Electrical Installation', description: 'Install electrical systems', assignee: 'Sarah Johnson', jobSite: 'Office Building B', priority: 'medium', status: 'pending', dueDate: '2024-01-30', createdAt: '2024-01-20' }
-                ]));
+                ] : [];
+                
+                const [teamMembers, setTeamMembers] = useState(DataManager.load('teamMembers', demoTeamMembers, companyId));
+                const [showAddMember, setShowAddMember] = useState(false);
+                const [reports, setReports] = useState(DataManager.load('reports', demoReports, companyId));
+                const [shifts, setShifts] = useState(DataManager.load('shifts', demoShifts, companyId));
+                const [showAddShift, setShowAddShift] = useState(false);
+                const [tasks, setTasks] = useState(DataManager.load('tasks', demoTasks, companyId));
                 const [showAddTask, setShowAddTask] = useState(false);
-                const [teamMessages, setTeamMessages] = useState(DataManager.load('teamMessages', []));
+                const [teamMessages, setTeamMessages] = useState(DataManager.load('teamMessages', [], companyId));
 
                 // Save data whenever it changes
                 useEffect(() => {
-                    DataManager.save('teamMembers', teamMembers);
-                }, [teamMembers]);
+                    DataManager.save('teamMembers', teamMembers, companyId);
+                }, [teamMembers, companyId]);
 
                 useEffect(() => {
-                    DataManager.save('reports', reports);
-                }, [reports]);
+                    DataManager.save('reports', reports, companyId);
+                }, [reports, companyId]);
 
                 useEffect(() => {
-                    DataManager.save('shifts', shifts);
-                }, [shifts]);
+                    DataManager.save('shifts', shifts, companyId);
+                }, [shifts, companyId]);
 
                 useEffect(() => {
-                    DataManager.save('tasks', tasks);
-                }, [tasks]);
+                    DataManager.save('tasks', tasks, companyId);
+                }, [tasks, companyId]);
 
                 useEffect(() => {
-                    DataManager.save('teamMessages', teamMessages);
-                }, [teamMessages]);
+                    DataManager.save('teamMessages', teamMessages, companyId);
+                }, [teamMessages, companyId]);
 
                 const handleAddTask = (taskData) => {
                     const newTask = {
@@ -1861,23 +1893,33 @@
 
             // Owner Dashboard Component
             const OwnerDashboard = () => {
-                const [showAddEmployee, setShowAddEmployee] = useState(false);
-                const [showAddManager, setShowAddManager] = useState(false);
-                const [showAddJobSite, setShowAddJobSite] = useState(false);
-                const [employees, setEmployees] = useState(DataManager.load('employees', [
+                // Get company ID from user (or use 'demo' for demo accounts)
+                const companyId = user.companyId || (user.id && user.id.startsWith('demo-') ? 'demo' : null);
+                
+                // Demo data only for demo accounts
+                const demoEmployees = user.id && user.id.startsWith('demo-') ? [
                     { id: 1, name: 'John Smith', email: 'john@company.com', role: 'employee', status: 'active' },
                     { id: 2, name: 'Sarah Johnson', email: 'sarah@company.com', role: 'employee', status: 'active' },
                     { id: 3, name: 'Mike Davis', email: 'mike@company.com', role: 'employee', status: 'active' }
-                ]));
-                const [managers, setManagers] = useState(DataManager.load('managers', [
+                ] : [];
+                
+                const demoManagers = user.id && user.id.startsWith('demo-') ? [
                     { id: 1, name: 'Jane Wilson', email: 'jane@company.com', role: 'manager', status: 'active' },
                     { id: 2, name: 'Tom Brown', email: 'tom@company.com', role: 'manager', status: 'active' }
-                ]));
-                const [jobSites, setJobSites] = useState(DataManager.load('jobSites', [
+                ] : [];
+                
+                const demoJobSites = user.id && user.id.startsWith('demo-') ? [
                     { id: 1, name: 'Construction Site A', address: '123 Main St', latitude: 40.7128, longitude: -74.0060, radius: 100, status: 'active' },
                     { id: 2, name: 'Office Building B', address: '456 Oak Ave', latitude: 40.7589, longitude: -73.9851, radius: 100, status: 'active' },
                     { id: 3, name: 'Warehouse C', address: '789 Pine Rd', latitude: 40.7505, longitude: -73.9934, radius: 100, status: 'active' }
-                ]));
+                ] : [];
+                
+                const [showAddEmployee, setShowAddEmployee] = useState(false);
+                const [showAddManager, setShowAddManager] = useState(false);
+                const [showAddJobSite, setShowAddJobSite] = useState(false);
+                const [employees, setEmployees] = useState(DataManager.load('employees', demoEmployees, companyId));
+                const [managers, setManagers] = useState(DataManager.load('managers', demoManagers, companyId));
+                const [jobSites, setJobSites] = useState(DataManager.load('jobSites', demoJobSites, companyId));
                 const [payrollSettings, setPayrollSettings] = useState(DataManager.load('payrollSettings', {
                     quickbooksEnabled: false,
                     adpEnabled: false,
@@ -1886,29 +1928,29 @@
                     defaultHourlyRate: 25.00,
                     overtimeThreshold: 40,
                     overtimeMultiplier: 1.5
-                }));
-                const [payrollReports, setPayrollReports] = useState(DataManager.load('payrollReports', []));
+                }, companyId));
+                const [payrollReports, setPayrollReports] = useState(DataManager.load('payrollReports', [], companyId));
 
                 // Save data whenever it changes
                 useEffect(() => {
-                    DataManager.save('employees', employees);
-                }, [employees]);
+                    DataManager.save('employees', employees, companyId);
+                }, [employees, companyId]);
 
                 useEffect(() => {
-                    DataManager.save('managers', managers);
-                }, [managers]);
+                    DataManager.save('managers', managers, companyId);
+                }, [managers, companyId]);
 
                 useEffect(() => {
-                    DataManager.save('jobSites', jobSites);
-                }, [jobSites]);
+                    DataManager.save('jobSites', jobSites, companyId);
+                }, [jobSites, companyId]);
 
                 useEffect(() => {
-                    DataManager.save('payrollSettings', payrollSettings);
-                }, [payrollSettings]);
+                    DataManager.save('payrollSettings', payrollSettings, companyId);
+                }, [payrollSettings, companyId]);
 
                 useEffect(() => {
-                    DataManager.save('payrollReports', payrollReports);
-                }, [payrollReports]);
+                    DataManager.save('payrollReports', payrollReports, companyId);
+                }, [payrollReports, companyId]);
 
                 // Helper function to parse duration string like "5h 30m" to hours
                 const parseDurationToHours = (durationStr) => {
@@ -1926,7 +1968,7 @@
 
                 // Helper function to get time entries for employees
                 const getTimeEntriesForSync = () => {
-                    const allTimeEntries = DataManager.load('timeEntries', []);
+                    const allTimeEntries = DataManager.load('timeEntries', [], companyId);
                     const today = new Date();
                     const startOfWeek = new Date(today);
                     startOfWeek.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
@@ -2850,16 +2892,42 @@
                         return;
                     }
 
+                    let companyId = null;
+                    
+                    // If registering as owner, create a new company
+                    if (registerData.role === 'owner') {
+                        const companies = DataManager.load('companies', []);
+                        const newCompany = {
+                            id: `company-${Date.now()}`,
+                            name: `${registerData.firstName} ${registerData.lastName}'s Company`,
+                            industry: 'General',
+                            address: '',
+                            phone: '',
+                            email: registerData.email,
+                            createdAt: new Date().toISOString(),
+                            ownerId: Date.now().toString()
+                        };
+                        companies.push(newCompany);
+                        DataManager.save('companies', companies);
+                        companyId = newCompany.id;
+                    }
+
                     const newUser = {
                         id: Date.now().toString(),
                         ...registerData,
+                        companyId: companyId,
                         createdAt: new Date().toISOString()
                     };
 
                     users.push(newUser);
                     DataManager.save('users', users);
                     
-                    alert('Account created successfully! You can now login.');
+                    if (registerData.role === 'owner') {
+                        alert(`✅ Account and company created successfully!\n\nCompany: ${newCompany.name}\nCompany ID: ${companyId}\n\nYou can now login and start managing your company.`);
+                    } else {
+                        alert('Account created successfully! You can now login.');
+                    }
+                    
                     setShowRegister(false);
                     setRegisterData({
                         username: '',
